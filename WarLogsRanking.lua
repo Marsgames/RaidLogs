@@ -1,15 +1,3 @@
--- WLRVars = {
---     version = GetAddOnMetadata("WarLogsRanking", "Version"),
---     prefixAddon = "WaRLoGsRaNkInG",
---     addonTruncatedVersion = 1
--- }
-
-local isWCLRankLoaded = IsAddOnLoaded("WarLogsRanking")
-local isRaiderioLoaded = IsAddOnLoaded("RaiderIO")
-
-print("isWCLRankLoaded: " .. tostring(isWCLRankLoaded))
-print("isRaiderioLoaded: " .. tostring(isRaiderioLoaded))
-
 local colors = {
     ["grey"] = "|cff9d9d9d",
     ["gray"] = "|cff9d9d9d",
@@ -235,22 +223,15 @@ frame:SetFrameStrata("BACKGROUND")
 frame:SetWidth(256)
 
 local texture = frame:CreateTexture(nil, "BACKGROUND")
--- texture:SetTexture("Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Factions.blp")
 texture:SetAllPoints(frame)
 texture:SetColorTexture(0, 0, 0.1, 0.75)
 frame.texture = texture
 frame.line = 0
 
 frame:SetPoint("CENTER", 20, 0)
--- frame:Show()
 
--- Add text to my frame
 local function AddLineToFrame(frame, text)
-    -- local fontString = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- fontString:SetPoint("TOPLEFT", 0, -16 * frame.line)
-    -- fontString:SetText(text)
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- frame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
     frame.text:SetPoint("TOPLEFT", 0, -16 * frame.line)
     frame.text:SetText(text)
     frame.line = frame.line + 1
@@ -270,11 +251,6 @@ AddLineToFrame(frame, "")
 for raid, bosses in pairs(datas["Niisha"]) do
     AddLineToFrame(frame, raid)
 
-    -- for loop from 0 to extBosses[raid] count
-    -- for i = 0, #extBosses[raid] do
-    --     print(i .. " " .. extBosses[raid][i] .. " : " .. tostring(bosses[extBosses[raid][i]]))
-    -- end
-    -- for boss, difficulties in pairs(bosses) do
     for i = 0, #extBosses[raid] do
         local boss = extBosses[raid][i]
         local difficulties = bosses[boss]
@@ -296,77 +272,13 @@ for raid, bosses in pairs(datas["Niisha"]) do
         end
     end
 
-    -- for boss, difficulties in pairs(bosses) do
-    --     local scoreColor = ternary(difficulties["M"] < 25, colors["grey"], ternary(difficulties["M"] < 50, colors["green"], ternary(difficulties["M"] < 75, colors["blue"], ternary(difficulties["M"] < 95, colors["purple"], ternary(difficulties["M"] < 99, colors["orange"], colors["herloom"])))))
-    --     lines[count] = colors["purple"] .. "M " .. colors["white"] .. boss .. "  : " .. scoreColor .. difficulties["M"] .. "%"
-    --     if difficulties["M"] > 0 then
-    --         maxDiff = "M"
-    --     end
-    --     count = count + 1
-    -- end
-
-    -- if maxDiff == "-" then
-    --     count = 0
-    --     for boss, difficulties in pairs(bosses) do
-    --         local scoreColor = ternary(difficulties["H"] < 25, colors["grey"], ternary(difficulties["H"] < 50, colors["green"], ternary(difficulties["H"] < 75, colors["blue"], ternary(difficulties["H"] < 95, colors["purple"], ternary(difficulties["H"] < 99, colors["orange"], colors["herloom"])))))
-    --         lines[count] = colors["blue"] .. "H " .. colors["white"] .. boss .. "  : " .. scoreColor .. difficulties["H"] .. "%"
-    --         if difficulties["H"] > 0 then
-    --             maxDiff = "H"
-    --         end
-    --         count = count + 1
-    --     end
-    -- end
-
-    -- if maxDiff == "-" then
-    --     count = 0
-    --     for boss, difficulties in pairs(bosses) do
-    --         local scoreColor = ternary(difficulties["N"] < 25, colors["grey"], ternary(difficulties["N"] < 50, colors["green"], ternary(difficulties["N"] < 75, colors["blue"], ternary(difficulties["N"] < 95, colors["purple"], ternary(difficulties["N"] < 99, colors["orange"], colors["herloom"])))))
-    --         lines[count] = colors["blue"] .. "N " .. colors["white"] .. boss .. "  : " .. scoreColor .. difficulties["N"] .. "%"
-    --         if difficulties["N"] > 0 then
-    --             maxDiff = "N"
-    --         end
-    --         count = count + 1
-    --     end
-    -- end
-
-    -- if maxDiff == "-" then
-    --     for boss, difficulties in pairs(bosses) do
-    --         boss = string.sub(boss, 4)
-    --         AddLineToFrame(frame, colors["grey"] .. "- " .. colors["white"] .. boss .. "  : " .. colors["grey"] .. "N/A")
-    --     end
-    -- else
-    --     -- sort lines
-    --     table.sort(
-    --         lines,
-    --         function(a, b)
-    --             return a < b
-    --         end
-    --     )
-    --     for i = 0, count - 1 do
-    --         -- remove pattern \d\d. from line
-    --         print("i = " .. i)
-    --         lines[i] = string.gsub(lines[i], "%d%d%.", "")
-    --         AddLineToFrame(frame, lines[i])
-    --     end
-    -- end
     AddLineToFrame(frame, "")
 end
-
---     end
-
---     for boss, difficulties in pairs(bosses) do
---         AddLineToFrame(frame, colors["white"] .. "  " .. boss)
---         for difficulty, rank in pairs(difficulties) do
---             AddLineToFrame(frame, difficulty)
---         end
---     end
---     AddLineToFrame(frame, "")
--- end
 
 frame:SetHeight(16 * frame.line)
 local isAnchored = false
 local function SetRaiderIOAnchor()
-    if (not isRaiderioLoaded) then
+    if (not IsAddOnLoaded("RaiderIO")) then
         return
     end
 
@@ -400,55 +312,3 @@ local function SetLFGAnchor()
 end
 
 SetLFGAnchor()
-
--- if (isRaiderioLoaded) then
---     -- SetRaiderIOAnchor()
---     local ri = RaiderIO_ProfileTooltip
---     frame:ClearAllPoints()
---     frame:SetPoint("TOPLEFT", ri, "TOPRIGHT", 0, 0)
---     frame:SetParent(ri)
--- else
---     local function SetAddonAnchor(self, event, arg1, ...)
---         if event == "ADDON_LOADED" and arg1 == "RaiderIO" then
---         -- SetRaiderIOAnchor()
---         end
---     end
---     local addonLoadFrame = CreateFrame("Frame")
---     addonLoadFrame:RegisterEvent("ADDON_LOADED")
---     addonLoadFrame:SetScript("OnEvent", SetAddonAnchor)
--- end
-
--- SetLFGAnchor()
-
--- for raid, bosses in pairs(datas["Niisha"]) do
---     AddLineToFrame(frame, raid)
---     local difficultyMax = ""
---     for boss, difficulties in pairs(bosses) do
---         for difficulty, rank in pairs(difficulties) do
---             if difficultyMax == "M" then
---                 break
---             end
---             if difficultyMax ~= "M" and difficulty == "M" and rank > 0 then
---                 difficultyMax = colors["purple"] .. "M"
---                 print("diff set to M")
---             elseif difficultyMax ~= "M" and difficulty == "H" and rank > 0 then
---                 difficultyMax = colors["blue"] .. "H"
---                 print("diff set to H")
---             elseif difficultyMax ~= "M" and difficultyMax ~= "H" and difficulty == "N" and rank > 0 then
---                 difficultyMax = colors["green"] .. "N"
---                 print("diff set to N")
---             end
---         end
---     end
---     for boss, difficulties in pairs(bosses) do
---         print("difficulties", difficulties)
---         DevTools_Dump(difficulties)
---         print("difficultyMax", difficultyMax)
---         print("difficulties[difficultyMax]", boss[difficultyMax])
---         do
---             return
---         end
---         local scoreColor = ternary(difficulties[difficultyMax] < 25, colors["grey"], ternary(difficulties[difficultyMax] < 50, colors["green"], ternary(difficulties[difficultyMax] < 75, colors["blue"], ternary(difficulties[difficultyMax] < 95, colors["purple"], ternary(difficulties[difficultyMax] < 99, colors["orange"], colors["herloom"])))))
---         AddLineToFrame(frame, difficultyMax .. " " .. boss .. " : " .. scoreColor .. difficulties[difficultyMax])
---     end
--- end
