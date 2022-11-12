@@ -1,0 +1,38 @@
+## Interface: 100000
+## Title: |cFF00FF00GWarLogsRanking|r
+## Notes: Un addon qui permet de choisir pour vous le stuff le plus approprié à votre classe / spé
+## Notes-enUS: Manage your gear during your level up and after
+### Notes-deDE: Manage your gear during your level up and after
+## Notes-ruRU: Управляет вашими вещами во время прокачки и на максимальном уровне персонажа
+## Author:  Marsgames & Tempaxe & Mío
+## Version: 1.0.0
+## DefaultState: enabled
+
+
+## X-Author-Faction: Horde
+## X-Author-Server: (EU) Temple-Noir | (EU) Hyjal
+## X-Credits: Big up
+
+## X-Category: Boss Encounters
+## X-eMail: marsgamess@gmail.com
+## X-BugReport: https://github.com/Marsgames/
+
+## SavedVariables: WLRdb
+
+# embeds.xml
+
+########## Localizations ##########
+#Localizations\enUS.lua
+#Localizations\frFR.lua
+#Localizations\ptBR.lua
+#Localizations\deDE.lua
+#Localizations\itIT.lua
+#Localizations\koKR.lua
+#Localizations\esMX.lua
+#Localizations\ruRU.lua
+#Localizations\zhCN.lua
+#Localizations\esES.lua
+#Localizations\zhTW.lua
+
+########## Addon ##########
+WarLogsRanking.lua
