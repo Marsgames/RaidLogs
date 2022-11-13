@@ -278,11 +278,11 @@ euServers = [
     "zuljin",
     "nerzhul",
 ]
-shadowlandsZones = {
-    "Sepulcher of the First Ones": 29,
-    "Sanctum of Domination": 28,
-    "Castle Nathria": 26,
-}
+shadowlandsZones = [
+    {"name": "Sepulcher of the First Ones", "id": 29},
+    {"name": "Sanctum of Domination", "id": 28},
+    {"name": "Castle Nathria", "id": 26},
+]
 encounters = {
     "Sepulcher of the First Ones": [
         {"name": "Vigilant Guardian", "id": 2512},
@@ -329,7 +329,7 @@ encounters = {
 query {
 	characterData {
 		character(name: "Niisha", serverSlug: "temple-noir", serverRegion: "EU") {
-			encounterRankings(encounterID: 2398, byBracket: true) {
+			encounterRankings(encounterID: 2398, difficulty: 4, byBracket: true, compare: Parses) {
 		}
 	}
 }
@@ -402,6 +402,37 @@ def GetEncounters(token: str, zoneID: int) -> list:
     return r.json()
 
 
+def GetDatas(token: str, player: str, realm: str):
+    headers = {"Authorization": f"Bearer {token}"}
+    for zone in shadowlandsZones:
+        for encounter in encounters[zone["name"]]:
+            try:
+                query = f"""
+                query {{
+                    characterData {{
+                        character(name: "{player}", serverSlug: "{realm}", serverRegion: "EU") {{
+                            encounterRankings(encounterID: {encounter["id"]}, difficulty: 3, byBracket: true, compare: Parses)
+                        }}
+                    }}
+                }}
+                """
+                # print(
+                #     f"----- query for {player} on {realm} for {encounter['name']} -----\n{query}"
+                # )
+
+                r = requests.post(baseURL, headers=headers, json={"query": query})
+                # print(r.json())
+                firstRankPercent = r.json()["data"]["characterData"]["character"][
+                    "encounterRankings"
+                ]["ranks"][0]["rankPercent"]
+                encName = encounter["name"]
+                print(f"boss : {encName} - {firstRankPercent} - N")
+            except Exception as e:
+                print(f"Unable to get data for : {encounter}\n{e}")
+                pass
+        print("")
+
+
 def RequestToken() -> str:
     data = {
         "grant_type": "client_credentials",
@@ -427,5 +458,6 @@ if __name__ == "__main__":
     access_token = RequestToken()
 
     # print(GetAllZones(access_token))
-    for zone in shadowlandsZones:
-        print(f"{zone} : {GetEncounters(access_token, shadowlandsZones[zone])}")
+    # for zone in shadowlandsZones:
+    #     print(f"{zone} : {GetEncounters(access_token, shadowlandsZones[zone])}")
+    GetDatas(access_token, "Niisha", "temple-noir")
