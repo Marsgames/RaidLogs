@@ -55,33 +55,33 @@ local datas = {
     ["Niisha"] = {
         ["Castle Nathria"] = {
             ["Shriekwing"] = {
-                ["N"] = 76,
-                ["H"] = 79,
+                ["N"] = 87,
+                ["H"] = 83,
                 ["M"] = 0
             },
             ["Huntsman Altimor"] = {
-                ["N"] = 81,
-                ["H"] = 80,
+                ["N"] = 80,
+                ["H"] = 72,
                 ["M"] = 0
             },
             ["Hungering Destroyer"] = {
-                ["N"] = 90,
+                ["N"] = 91,
                 ["H"] = 82,
                 ["M"] = 0
             },
             ["Sun King's Salvation"] = {
-                ["N"] = 86,
-                ["H"] = 75,
+                ["N"] = 74,
+                ["H"] = 80,
                 ["M"] = 0
             },
             ["Artificer Xy'Mox"] = {
-                ["N"] = 83,
-                ["H"] = 75,
+                ["N"] = 76,
+                ["H"] = 82,
                 ["M"] = 0
             },
             ["Lady Inerva Darkvein"] = {
-                ["N"] = 86,
-                ["H"] = 90,
+                ["N"] = 83,
+                ["H"] = 87,
                 ["M"] = 0
             },
             ["The Council of Blood"] = {
@@ -90,44 +90,44 @@ local datas = {
                 ["M"] = 0
             },
             ["Sludgefist"] = {
-                ["N"] = 82,
-                ["H"] = 62,
+                ["N"] = 90,
+                ["H"] = 59,
                 ["M"] = 0
             },
             ["Stone Legion Generals"] = {
-                ["N"] = 73,
-                ["H"] = 59,
+                ["N"] = 79,
+                ["H"] = 60,
                 ["M"] = 0
             },
             ["Sire Denathrius"] = {
                 ["N"] = 82,
-                ["H"] = 27,
+                ["H"] = 37,
                 ["M"] = 0
             }
         },
         ["Sanctum of Domination"] = {
             ["The Tarragrue"] = {
-                ["N"] = 95,
-                ["H"] = 80,
+                ["N"] = 97,
+                ["H"] = 82,
                 ["M"] = 0
             },
             ["The Eye of the Jailer"] = {
-                ["N"] = 95,
-                ["H"] = 85,
+                ["N"] = 97,
+                ["H"] = 94,
                 ["M"] = 0
             },
             ["The Nine"] = {
-                ["N"] = 88,
-                ["H"] = 26,
+                ["N"] = 93,
+                ["H"] = 49,
                 ["M"] = 0
             },
             ["Remnant of Ner'zhul"] = {
-                ["N"] = 45,
-                ["H"] = 4,
+                ["N"] = 60,
+                ["H"] = 8,
                 ["M"] = 0
             },
             ["Soulrender Dormazain"] = {
-                ["N"] = 68,
+                ["N"] = 85,
                 ["H"] = 0,
                 ["M"] = 0
             },
@@ -137,22 +137,22 @@ local datas = {
                 ["M"] = 0
             },
             ["Guardian of the First Ones"] = {
-                ["N"] = 84,
+                ["N"] = 90,
                 ["H"] = 0,
                 ["M"] = 0
             },
             ["Fatescribe Roh-Kalo"] = {
-                ["N"] = 64,
+                ["N"] = 72,
                 ["H"] = 0,
                 ["M"] = 0
             },
             ["Kel'Thuzad"] = {
-                ["N"] = 77,
+                ["N"] = 91,
                 ["H"] = 0,
                 ["M"] = 0
             },
             ["Sylvanas Windrunner"] = {
-                ["N"] = 50,
+                ["N"] = 82,
                 ["H"] = 0,
                 ["M"] = 0
             }
@@ -160,82 +160,62 @@ local datas = {
         ["Sepulcher of the First Ones"] = {
             ["Vigilant Guardian"] = {
                 ["N"] = 93,
-                ["H"] = 45,
+                ["H"] = 70,
                 ["M"] = 0
             },
             ["Dausegne, the Fallen Oracle"] = {
                 ["N"] = 99,
-                ["H"] = 0,
+                ["H"] = 100,
                 ["M"] = 0
             },
             ["Artificer Xy'Mox"] = {
                 ["N"] = 79,
-                ["H"] = 0,
+                ["H"] = 67,
                 ["M"] = 0
             },
             ["Prototype Pantheon"] = {
                 ["N"] = 90,
-                ["H"] = 0,
+                ["H"] = 63,
                 ["M"] = 0
             },
             ["Skolex, the Insatiable Ravener"] = {
                 ["N"] = 99,
-                ["H"] = 58,
+                ["H"] = 50,
                 ["M"] = 0
             },
             ["Halondrus the Reclaimer"] = {
                 ["N"] = 95,
-                ["H"] = 0,
+                ["H"] = 100,
                 ["M"] = 0
             },
             ["Lihuvim, Principal Architect"] = {
                 ["N"] = 98,
-                ["H"] = 0,
+                ["H"] = 71,
                 ["M"] = 0
             },
             ["Anduin Wrynn"] = {
                 ["N"] = 64,
-                ["H"] = 0,
+                ["H"] = 57,
                 ["M"] = 0
             },
             ["Lords of Dread"] = {
                 ["N"] = 87,
-                ["H"] = 0,
+                ["H"] = 50,
                 ["M"] = 0
             },
             ["Rygelon"] = {
                 ["N"] = 88,
-                ["H"] = 0,
+                ["H"] = 100,
                 ["M"] = 0
             },
             ["The Jailer"] = {
                 ["N"] = 89,
-                ["H"] = 0,
+                ["H"] = 50,
                 ["M"] = 0
             }
         }
     }
 }
-
--- Create empty frame
-local frame = CreateFrame("Frame", "WarLogsRanking", UIParent)
-frame:SetFrameStrata("BACKGROUND")
-frame:SetWidth(256)
-
-local texture = frame:CreateTexture(nil, "BACKGROUND")
-texture:SetAllPoints(frame)
-texture:SetColorTexture(0, 0, 0.1, 0.75)
-frame.texture = texture
-frame.line = 0
-
-frame:SetPoint("CENTER", 20, 0)
-
-local function AddLineToFrame(frame, text)
-    frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    frame.text:SetPoint("TOPLEFT", 0, -16 * frame.line)
-    frame.text:SetText(text)
-    frame.line = frame.line + 1
-end
 
 local function ternary(condition, ifTrue, ifFalse)
     if condition then
@@ -245,70 +225,61 @@ local function ternary(condition, ifTrue, ifFalse)
     end
 end
 
-AddLineToFrame(frame, colors["white"] .. "Niisha (Temple-Noir)")
-AddLineToFrame(frame, "")
+local function InitAddon()
+    local frame = WarLogsRanking or CreateFrame("GameTooltip", "WarLogsRanking", PVEFrame, "GameTooltipTemplate")
+    frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
-for raid, bosses in pairs(datas["Niisha"]) do
-    AddLineToFrame(frame, raid)
+    if (IsAddOnLoaded("RaiderIO")) then
+        local ri = RaiderIO_ProfileTooltip
+        frame:SetPoint("TOPLEFT", ri, "TOPRIGHT", 0, 0)
+    else
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", PVEFrame, "TOPRIGHT", 0, 0)
+    end
 
-    for i = 0, #extBosses[raid] do
-        local boss = extBosses[raid][i]
-        local difficulties = bosses[boss]
-        local maxDifficulty = "-"
-        local line = ""
+    frame:AddLine(colors.white .. "Niisha - Temple-Noir")
+    frame:AddLine(" ")
 
-        for difficulty, rank in pairs(difficulties) do
-            local scoreColor = ternary(difficulties[difficulty] < 25, colors["grey"], ternary(difficulties[difficulty] < 50, colors["green"], ternary(difficulties[difficulty] < 75, colors["blue"], ternary(difficulties[difficulty] < 95, colors["purple"], ternary(difficulties[difficulty] < 99, colors["orange"], ternary(difficulties[difficulty] < 100, colors.pink, colors["herloom"]))))))
-            if (maxDifficulty == "-" and rank > 0) then
-                maxDifficulty = difficulty
-                local diffColor = ternary(difficulty == "N", colors["green"], ternary(difficulty == "H", colors["blue"], colors["purple"]))
-                line = diffColor .. difficulty .. " " .. colors["white"] .. boss .. " : " .. scoreColor .. rank .. "%"
+    local raidCount = 0
+    for raid, bosses in pairs(datas["Niisha"]) do
+        raidCount = raidCount + 1
+        frame:AddLine(raid)
+
+        for i = 0, #extBosses[raid] do
+            local boss = extBosses[raid][i]
+            local difficulties = bosses[boss]
+            local maxDifficulty = "-"
+            local lineLeft = ""
+            local lineRight = ""
+
+            for difficulty, rank in pairs(difficulties) do
+                local scoreColor = ternary(difficulties[difficulty] < 25, colors["grey"], ternary(difficulties[difficulty] < 50, colors["green"], ternary(difficulties[difficulty] < 75, colors["blue"], ternary(difficulties[difficulty] < 95, colors["purple"], ternary(difficulties[difficulty] < 99, colors["orange"], ternary(difficulties[difficulty] < 100, colors.pink, colors["herloom"]))))))
+                if (maxDifficulty == "-" and rank > 0) then
+                    maxDifficulty = difficulty
+                    local diffColor = ternary(difficulty == "N", colors["green"], ternary(difficulty == "H", colors["blue"], colors["purple"]))
+                    lineLeft = diffColor .. difficulty .. " " .. colors["white"] .. boss
+                    lineRight = scoreColor .. rank .. "%"
+                end
+            end
+            if lineLeft == "" then
+                frame:AddDoubleLine(colors.grey .. "- " .. colors.white .. boss, colors.grey .. "N/A")
+            else
+                frame:AddDoubleLine(lineLeft, lineRight)
             end
         end
-        if line == "" then
-            AddLineToFrame(frame, colors["grey"] .. "- " .. colors.white .. boss .. " : " .. colors["grey"] .. "N/A")
-        else
-            AddLineToFrame(frame, line)
+
+        if raidCount < 3 then
+            frame:AddLine(" ")
         end
     end
 
-    AddLineToFrame(frame, "")
+    return frame
 end
 
-frame:SetHeight(16 * frame.line)
-local isAnchored = false
-local function SetRaiderIOAnchor()
-    if (not IsAddOnLoaded("RaiderIO")) then
-        return
+PVEFrame:HookScript(
+    "OnShow",
+    function()
+        local tt = InitAddon()
+        tt:Show()
     end
-
-    local ri = RaiderIO_ProfileTooltip
-    frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", ri, "TOPRIGHT", 0, 0)
-    frame:SetParent(ri)
-    idAnchored = true
-end
-local function SetLFGAnchor()
-    local pveFrame = PVEFrame
-    frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", pveFrame, "TOPRIGHT", 0, 0)
-    frame:SetParent(pveFrame)
-
-    pveFrame:HookScript(
-        "OnShow",
-        function()
-            frame:Show()
-            if (not isAnchored) then
-                SetRaiderIOAnchor()
-            end
-        end
-    )
-    pveFrame:HookScript(
-        "OnHide",
-        function()
-            frame:Hide()
-        end
-    )
-end
-
-SetLFGAnchor()
+)
