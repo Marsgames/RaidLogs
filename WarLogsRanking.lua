@@ -31,6 +31,8 @@ local function InitAddon(unitName, unitRealm)
     local frame = WarLogsRanking or CreateFrame("GameTooltip", "WarLogsRanking", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
+    -- TODO: return empty frame if unit is not in db
+
     if (IsAddOnLoaded("RaiderIO")) then
         local ri = RaiderIO_ProfileTooltip
         frame:SetPoint("TOPLEFT", ri, "TOPRIGHT", 0, 0)
