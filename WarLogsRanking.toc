@@ -34,5 +34,9 @@
 #Localizations\esES.lua
 #Localizations\zhTW.lua
 
+########## DB ##########
+db\WLR_raids.lua
+db\WLR_EU.lua
+
 ########## Addon ##########
 WarLogsRanking.lua

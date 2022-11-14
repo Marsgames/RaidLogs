@@ -1,3 +1,7 @@
+local addonName, ns = ...
+
+local db = ns.db
+
 local colors = {
     ["grey"] = "|cff9d9d9d",
     ["gray"] = "|cff9d9d9d",
@@ -11,211 +15,7 @@ local colors = {
     ["yellow"] = "|cffffff00"
 }
 
-local extBosses = {
-    ["Castle Nathria"] = {
-        [0] = "Shriekwing",
-        [1] = "Huntsman Altimor",
-        [2] = "Hungering Destroyer",
-        [3] = "Sun King's Salvation",
-        [4] = "Artificer Xy'Mox",
-        [5] = "Lady Inerva Darkvein",
-        [6] = "The Council of Blood",
-        [7] = "Sludgefist",
-        [8] = "Stone Legion Generals",
-        [9] = "Sire Denathrius"
-    },
-    ["Sanctum of Domination"] = {
-        [0] = "The Tarragrue",
-        [1] = "The Eye of the Jailer",
-        [2] = "The Nine",
-        [3] = "Remnant of Ner'zhul",
-        [4] = "Soulrender Dormazain",
-        [5] = "Painsmith Raznal",
-        [6] = "Guardian of the First Ones",
-        [7] = "Fatescribe Roh-Kalo",
-        [8] = "Kel'Thuzad",
-        [9] = "Sylvanas Windrunner"
-    },
-    ["Sepulcher of the First Ones"] = {
-        [0] = "Vigilant Guardian",
-        [1] = "Dausegne, the Fallen Oracle",
-        [2] = "Artificer Xy'Mox",
-        [3] = "Prototype Pantheon",
-        [4] = "Skolex, the Insatiable Ravener",
-        [5] = "Halondrus the Reclaimer",
-        [6] = "Lihuvim, Principal Architect",
-        [7] = "Anduin Wrynn",
-        [8] = "Lords of Dread",
-        [9] = "Rygelon",
-        [10] = "The Jailer"
-    }
-}
-
-local datas = {
-    ["Niisha"] = {
-        ["Castle Nathria"] = {
-            ["Shriekwing"] = {
-                ["N"] = 87,
-                ["H"] = 83,
-                ["M"] = 0
-            },
-            ["Huntsman Altimor"] = {
-                ["N"] = 80,
-                ["H"] = 72,
-                ["M"] = 0
-            },
-            ["Hungering Destroyer"] = {
-                ["N"] = 91,
-                ["H"] = 82,
-                ["M"] = 0
-            },
-            ["Sun King's Salvation"] = {
-                ["N"] = 74,
-                ["H"] = 80,
-                ["M"] = 0
-            },
-            ["Artificer Xy'Mox"] = {
-                ["N"] = 76,
-                ["H"] = 82,
-                ["M"] = 0
-            },
-            ["Lady Inerva Darkvein"] = {
-                ["N"] = 83,
-                ["H"] = 87,
-                ["M"] = 0
-            },
-            ["The Council of Blood"] = {
-                ["N"] = 80,
-                ["H"] = 77,
-                ["M"] = 0
-            },
-            ["Sludgefist"] = {
-                ["N"] = 90,
-                ["H"] = 59,
-                ["M"] = 0
-            },
-            ["Stone Legion Generals"] = {
-                ["N"] = 79,
-                ["H"] = 60,
-                ["M"] = 0
-            },
-            ["Sire Denathrius"] = {
-                ["N"] = 82,
-                ["H"] = 37,
-                ["M"] = 0
-            }
-        },
-        ["Sanctum of Domination"] = {
-            ["The Tarragrue"] = {
-                ["N"] = 97,
-                ["H"] = 82,
-                ["M"] = 0
-            },
-            ["The Eye of the Jailer"] = {
-                ["N"] = 97,
-                ["H"] = 94,
-                ["M"] = 0
-            },
-            ["The Nine"] = {
-                ["N"] = 93,
-                ["H"] = 49,
-                ["M"] = 0
-            },
-            ["Remnant of Ner'zhul"] = {
-                ["N"] = 60,
-                ["H"] = 8,
-                ["M"] = 0
-            },
-            ["Soulrender Dormazain"] = {
-                ["N"] = 85,
-                ["H"] = 0,
-                ["M"] = 0
-            },
-            ["Painsmith Raznal"] = {
-                ["N"] = 48,
-                ["H"] = 0,
-                ["M"] = 0
-            },
-            ["Guardian of the First Ones"] = {
-                ["N"] = 90,
-                ["H"] = 0,
-                ["M"] = 0
-            },
-            ["Fatescribe Roh-Kalo"] = {
-                ["N"] = 72,
-                ["H"] = 0,
-                ["M"] = 0
-            },
-            ["Kel'Thuzad"] = {
-                ["N"] = 91,
-                ["H"] = 0,
-                ["M"] = 0
-            },
-            ["Sylvanas Windrunner"] = {
-                ["N"] = 82,
-                ["H"] = 0,
-                ["M"] = 0
-            }
-        },
-        ["Sepulcher of the First Ones"] = {
-            ["Vigilant Guardian"] = {
-                ["N"] = 93,
-                ["H"] = 70,
-                ["M"] = 0
-            },
-            ["Dausegne, the Fallen Oracle"] = {
-                ["N"] = 99,
-                ["H"] = 100,
-                ["M"] = 0
-            },
-            ["Artificer Xy'Mox"] = {
-                ["N"] = 79,
-                ["H"] = 67,
-                ["M"] = 0
-            },
-            ["Prototype Pantheon"] = {
-                ["N"] = 90,
-                ["H"] = 63,
-                ["M"] = 0
-            },
-            ["Skolex, the Insatiable Ravener"] = {
-                ["N"] = 99,
-                ["H"] = 50,
-                ["M"] = 0
-            },
-            ["Halondrus the Reclaimer"] = {
-                ["N"] = 95,
-                ["H"] = 100,
-                ["M"] = 0
-            },
-            ["Lihuvim, Principal Architect"] = {
-                ["N"] = 98,
-                ["H"] = 71,
-                ["M"] = 0
-            },
-            ["Anduin Wrynn"] = {
-                ["N"] = 64,
-                ["H"] = 57,
-                ["M"] = 0
-            },
-            ["Lords of Dread"] = {
-                ["N"] = 87,
-                ["H"] = 50,
-                ["M"] = 0
-            },
-            ["Rygelon"] = {
-                ["N"] = 88,
-                ["H"] = 100,
-                ["M"] = 0
-            },
-            ["The Jailer"] = {
-                ["N"] = 89,
-                ["H"] = 50,
-                ["M"] = 0
-            }
-        }
-    }
-}
+local extBosses = db["Extension"]["Shadowlands"]
 
 local function ternary(condition, ifTrue, ifFalse)
     if condition then
@@ -241,7 +41,7 @@ local function InitAddon()
     frame:AddLine(" ")
 
     local raidCount = 0
-    for raid, bosses in pairs(datas["Niisha"]) do
+    for raid, bosses in pairs(db["Temple Noir"]["Niisha"]) do
         raidCount = raidCount + 1
         frame:AddLine(raid)
 
@@ -281,5 +81,19 @@ PVEFrame:HookScript(
     function()
         local tt = InitAddon()
         tt:Show()
+    end
+)
+
+GameTooltip:HookScript(
+    "OnShow",
+    function()
+        -- Check if _G["GameTooltipTextLeft1"]:GetText() match with pattern "name-realm"
+        local matchPatern = _G["GameTooltipTextLeft1"]:GetText() and string.match(_G["GameTooltipTextLeft1"]:GetText(), "^(%a+)-(%a+)$")
+        if (matchPatern) then
+            local tt = InitAddon()
+            tt:ClearAllPoints()
+            tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
+            tt:Show()
+        end
     end
 )
