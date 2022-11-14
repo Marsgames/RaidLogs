@@ -16,6 +16,8 @@ local colors = {
 }
 
 local extBosses = db["Extension"]["Shadowlands"]
+local playerName = GetUnitName("player")
+local playerRealm = GetRealmName()
 
 local function ternary(condition, ifTrue, ifFalse)
     if condition then
@@ -25,7 +27,7 @@ local function ternary(condition, ifTrue, ifFalse)
     end
 end
 
-local function InitAddon()
+local function InitAddon(unitName, unitRealm)
     local frame = WarLogsRanking or CreateFrame("GameTooltip", "WarLogsRanking", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
@@ -37,11 +39,11 @@ local function InitAddon()
         frame:SetPoint("TOPLEFT", PVEFrame, "TOPRIGHT", 0, 0)
     end
 
-    frame:AddLine(colors.white .. "Niisha - Temple-Noir")
+    frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
     frame:AddLine(" ")
 
     local raidCount = 0
-    for raid, bosses in pairs(db["Temple Noir"]["Niisha"]) do
+    for raid, bosses in pairs(db[string.lower(unitRealm)][unitName]) do
         raidCount = raidCount + 1
         frame:AddLine(raid)
 
@@ -76,24 +78,39 @@ local function InitAddon()
     return frame
 end
 
+local pveFrameIsShown = false
 PVEFrame:HookScript(
     "OnShow",
     function()
-        local tt = InitAddon()
+        local tt = InitAddon(playerName, playerRealm)
         tt:Show()
+        pveFrameIsShown = true
+    end
+)
+PVEFrame:HookScript(
+    "OnHide",
+    function()
+        -- local tt = InitAddon(playerName, playerRealm)
+        -- tt:Hide()
+        pveFrameIsShown = false
     end
 )
 
 GameTooltip:HookScript(
     "OnShow",
     function()
-        -- Check if _G["GameTooltipTextLeft1"]:GetText() match with pattern "name-realm"
-        local matchPatern = _G["GameTooltipTextLeft1"]:GetText() and string.match(_G["GameTooltipTextLeft1"]:GetText(), "^(%a+)-(%a+)$")
-        if (matchPatern) then
-            local tt = InitAddon()
+        local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
+        if (pveFrameIsShown and (name and realm)) then
+            local tt = InitAddon("Niisha", "Temple Noir")
             tt:ClearAllPoints()
             tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
             tt:Show()
         end
+    end
+)
+GameTooltip:HookScript(
+    "OnHide",
+    function()
+        local tt = InitAddon(playerName, playerRealm)
     end
 )
