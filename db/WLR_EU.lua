@@ -1,7 +1,7 @@
 local addonName, ns = ...
 local db = ns.db
 
-db["Temple Noir"] = {
+db["temple noir"] = {
     ["Niisha"] = {
         ["Castle Nathria"] = {
             ["Shriekwing"] = {
