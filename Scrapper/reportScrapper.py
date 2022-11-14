@@ -35,4 +35,4 @@ for key, value in urls.items():
     # append new links to file
     with open(f"{key}.txt", "a") as f:
         for link in links:
-            f.write(link + "\n")Ò
+            f.write(link + "\n")
