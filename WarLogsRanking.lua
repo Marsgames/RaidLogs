@@ -31,7 +31,9 @@ local function InitAddon(unitName, unitRealm)
     local frame = WarLogsRanking or CreateFrame("GameTooltip", "WarLogsRanking", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
-    -- TODO: return empty frame if unit is not in db
+    if (not db[string.lower(unitRealm)] or not db[string.lower(unitRealm)][unitName]) then
+        return frame
+    end
 
     if (IsAddOnLoaded("RaiderIO")) then
         local ri = RaiderIO_ProfileTooltip
@@ -102,11 +104,15 @@ GameTooltip:HookScript(
     "OnShow",
     function()
         local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
+        -- Name contains space
         if (pveFrameIsShown and (name and realm)) then
-            local tt = InitAddon("Niisha", "Temple Noir")
-            tt:ClearAllPoints()
-            tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
-            tt:Show()
+            local containsSpace = name:find(" ")
+            if (not containsSpace) then
+                local tt = InitAddon("Niisha", "Temple Noir")
+                tt:ClearAllPoints()
+                tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
+                tt:Show()
+            end
         end
     end
 )
