@@ -1,7 +1,4 @@
-rm /Users/mantis/.local/share/virtualenvs/Scrapper-RM4c-HVk/lib/python3.10/site-packages/lambda_function.py
-rm /Users/mantis/Desktop/github/WarLogsRanking/Scrapper/lambda_package.zip
-cp /Users/mantis/Desktop/github/WarLogsRanking/Scrapper/lambda_function.py /Users/mantis/.local/share/virtualenvs/Scrapper-RM4c-HVk/lib/python3.10/site-packages
-pushd
-cd /Users/mantis/.local/share/virtualenvs/Scrapper-RM4c-HVk/lib/python3.10/site-packages
-zip -r9 /Users/mantis/Desktop/github/WarLogsRanking/Scrapper/lambda_package.zip *
-popd
+1. pip install pipenv
+2. cd report-id
+3. pipenv install
+4. Take env path and put it in create_lambda_archive.sh & replace path to repo root
