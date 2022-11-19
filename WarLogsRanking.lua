@@ -105,13 +105,17 @@ GameTooltip:HookScript(
     function()
         local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
         -- Name contains space
-        if (pveFrameIsShown and (name and realm)) then
+        if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
             local containsSpace = name:find(" ")
             if (not containsSpace) then
+                local id = C_LFGList.GetActiveEntryInfo().activityID
+                local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
                 local tt = InitAddon("Niisha", "Temple Noir")
-                tt:ClearAllPoints()
-                tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
-                tt:Show()
+                if (not IsAddOnLoaded("RaiderIO")) then
+                    tt:ClearAllPoints()
+                    tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
+                    tt:Show()
+                end
             end
         end
     end
