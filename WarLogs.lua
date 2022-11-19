@@ -28,7 +28,7 @@ local function ternary(condition, ifTrue, ifFalse)
 end
 
 local function InitAddon(unitName, unitRealm)
-    local frame = WarLogsRanking or CreateFrame("GameTooltip", "WarLogsRanking", PVEFrame, "GameTooltipTemplate")
+    local frame = WarLogs or CreateFrame("GameTooltip", "WarLogs", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
     if (not db[string.lower(unitRealm)] or not db[string.lower(unitRealm)][unitName]) then

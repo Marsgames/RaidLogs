@@ -1,9 +1,7 @@
 ## Interface: 100002
-## Title: |cFF00FF00GWarLogsRanking|r
-## Notes: Un addon qui permet de choisir pour vous le stuff le plus approprié à votre classe / spé
-## Notes-enUS: Manage your gear during your level up and after
-### Notes-deDE: Manage your gear during your level up and after
-## Notes-ruRU: Управляет вашими вещами во время прокачки и на максимальном уровне персонажа
+## Title: |cFF00FF00GWarLogs|r
+## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
+## Notes-enUS: Show you Warcraft Logs ranking in game 
 ## Author:  Marsgames & Tempaxe & Mío
 ## Version: 1.0.0
 ## DefaultState: enabled
@@ -17,7 +15,7 @@
 ## X-eMail: marsgamess@gmail.com
 ## X-BugReport: https://github.com/Marsgames/
 
-## SavedVariables: WLRdb
+## SavedVariables: WLdb
 
 # embeds.xml
 
@@ -35,8 +33,8 @@
 #Localizations\zhTW.lua
 
 ########## DB ##########
-db\WLR_raids.lua
-db\WLR_EU.lua
+db\WL_raids.lua
+db\WL_EU.lua
 
 ########## Addon ##########
-WarLogsRanking.lua
+WarLogs.lua

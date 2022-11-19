@@ -1,2 +1,4 @@
 .vscode/settings.json
 *.zip
+.DS_Store
+scripts/.DS_Store
