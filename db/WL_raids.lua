@@ -3,9 +3,93 @@ local db = ns.db
 
 db = {}
 
+db.RaidName = {
+    [26] = "Castle Nathria",
+    [28] = "Sanctum of Domination",
+    [29] = "Sepulcher of the First Ones"
+}
+db.BossName = {
+    [26] = {
+        [2398] = "Shriekwing",
+        [2418] = "Huntsman Altimor",
+        [2383] = "Hungering Destroyer",
+        [2402] = "Sun King's Salvation",
+        [2405] = "Artificer Xy'Mox",
+        [2406] = "Lady Inerva Darkvein",
+        [2412] = "The Council of Blood",
+        [2399] = "Sludgefist",
+        [2417] = "Stone Legion Generals",
+        [2407] = "Sire Denathrius"
+    },
+    [28] = {
+        [2423] = "The Tarragrue",
+        [2433] = "The Eye of the Jailer",
+        [2429] = "The Nine",
+        [2432] = "Remnant of Ner'zhul",
+        [2434] = "Soulrender Dormazain",
+        [2430] = "Painsmith Raznal",
+        [2436] = "Guardian of the First Ones",
+        [2431] = "Fatescribe Roh-Kalo",
+        [2422] = "Kel'Thuzad",
+        [2435] = "Sylvanas Windrunner"
+    },
+    [29] = {
+        [2512] = "Vigilant Guardian",
+        [2540] = "Dausegne, the Fallen Oracle",
+        [2553] = "Artificer Xy'Mox",
+        [2544] = "Prototype Pantheon",
+        [2542] = "Skolex, the Insatiable Ravener",
+        [2529] = "Halondrus the Reclaimer",
+        [2539] = "Lihuvim, Principal Architect",
+        [2546] = "Anduin Wrynn",
+        [2543] = "Lords of Dread",
+        [2549] = "Rygelon",
+        [2537] = "The Jailer"
+    }
+}
+db.BossId = {
+    [26] = {
+        ["Shriekwing"] = 2398,
+        ["Huntsman Altimor"] = 2418,
+        ["Hungering Destroyer"] = 2383,
+        ["Sun King's Salvation"] = 2402,
+        ["Artificer Xy'Mox"] = 2405,
+        ["Lady Inerva Darkvein"] = 2406,
+        ["The Council of Blood"] = 2412,
+        ["Sludgefist"] = 2399,
+        ["Stone Legion Generals"] = 2417,
+        ["Sire Denathrius"] = 2407
+    },
+    [28] = {
+        ["The Tarragrue"] = 2423,
+        ["The Eye of the Jailer"] = 2433,
+        ["The Nine"] = 2429,
+        ["Remnant of Ner'zhul"] = 2432,
+        ["Soulrender Dormazain"] = 2434,
+        ["Painsmith Raznal"] = 2430,
+        ["Guardian of the First Ones"] = 2436,
+        ["Fatescribe Roh-Kalo"] = 2431,
+        ["Kel'Thuzad"] = 2422,
+        ["Sylvanas Windrunner"] = 2435
+    },
+    [29] = {
+        ["Vigilant Guardian"] = 2512,
+        ["Dausegne, the Fallen Oracle"] = 2540,
+        ["Artificer Xy'Mox"] = 2553,
+        ["Prototype Pantheon"] = 2544,
+        ["Skolex, the Insatiable Ravener"] = 2542,
+        ["Halondrus the Reclaimer"] = 2529,
+        ["Lihuvim, Principal Architect"] = 2539,
+        ["Anduin Wrynn"] = 2546,
+        ["Lords of Dread"] = 2543,
+        ["Rygelon"] = 2549,
+        ["The Jailer"] = 2537
+    }
+}
+
 db["Extension"] = {
     ["Shadowlands"] = {
-        ["Castle Nathria"] = {
+        [26] = {
             [0] = "Shriekwing",
             [1] = "Huntsman Altimor",
             [2] = "Hungering Destroyer",
@@ -17,7 +101,7 @@ db["Extension"] = {
             [8] = "Stone Legion Generals",
             [9] = "Sire Denathrius"
         },
-        ["Sanctum of Domination"] = {
+        [28] = {
             [0] = "The Tarragrue",
             [1] = "The Eye of the Jailer",
             [2] = "The Nine",
@@ -29,7 +113,7 @@ db["Extension"] = {
             [8] = "Kel'Thuzad",
             [9] = "Sylvanas Windrunner"
         },
-        ["Sepulcher of the First Ones"] = {
+        [29] = {
             [0] = "Vigilant Guardian",
             [1] = "Dausegne, the Fallen Oracle",
             [2] = "Artificer Xy'Mox",
