@@ -249,7 +249,7 @@ class Player:
         player_data.pop("server", None)
 
         for key, bossData in player_data.items():
-            self.raids.append({
+            self.raids[key] = {
                 "rank": rank,
                 "encounter": wcl_alias_to_encounter_mapping[key],
                 "tag": key,
@@ -259,13 +259,13 @@ class Player:
                 "averagePerformance": int(bossData["averagePerformance"] or 0),
                 "bestPerformance": int(max(rank["rankPercent"] for rank in bossData["ranks"]) if len(bossData["ranks"]) > 0 else 0),
                 "totalKills": bossData["totalKills"]
-            })
+            }
 
     def load_data_from_json(self, player_data, id, rank):
         self.name = player_data.pop("name")
         self.id = id
         self.server = player_data.pop("server")["name"]
-        self.raids = []
+        self.raids = {}
 
         self.append_raids_data(player_data, rank) 
 
@@ -299,11 +299,18 @@ def get_players_stats_for_player(playerRankMsg, players):
             players[playerId] = Player(player_data, playerId, rank)
     return players
 
-def put_players(players):
+def upsert_players(players):
     print(f"Saving {len(players)} players to DynamoDB")
-    print([player.__dict__ for player in players.values()])
-    for player in players.values():
-        wcl_table.put_item(Item=player.__dict__)
+    batch_keys = {
+        wcl_table.name: {
+            'Keys': [{'id': player.id} for player in players]
+        }
+    }
+
+    response = dynamo.batch_get_item(RequestItems=batch_keys)
+    for existingPlayer in response["Responses"][wcl_table.name]:
+        print(existingPlayer)
+        #wcl_table.put_item(Item=player.__dict__)
     #Limit batching, because in free tier too fast it reach DynamoDB limit
     #with wcl_table.batch_writer() as batch:
         #for player in players.values():
@@ -320,7 +327,7 @@ def lambda_handler(event, ctx):
             ReceiptHandle=record["receiptHandle"]
         )
     
-    put_players(players)
+    upsert_players(players)
     return {
         'statusCode': 200
     }
