@@ -27,30 +27,42 @@ local function ternary(condition, ifTrue, ifFalse)
     end
 end
 
-local function ProcessRaid(raid, frame, unitRealm, unitName)
-    local bosses = db[string.lower(unitRealm)][unitName][raid]
-    frame:AddLine(raid)
-
-    for i = 0, #extBosses[raid] do
-        local boss = extBosses[raid][i]
-        local difficulties = bosses[boss]
-        local maxDifficulty = "-"
-        local lineLeft = ""
-        local lineRight = ""
-
-        for difficulty, rank in pairs(difficulties) do
-            local scoreColor = ternary(difficulties[difficulty] < 25, colors["grey"], ternary(difficulties[difficulty] < 50, colors["green"], ternary(difficulties[difficulty] < 75, colors["blue"], ternary(difficulties[difficulty] < 95, colors["purple"], ternary(difficulties[difficulty] < 99, colors["orange"], ternary(difficulties[difficulty] < 100, colors.pink, colors["herloom"]))))))
-            if (maxDifficulty == "-" and rank > 0) then
-                maxDifficulty = difficulty
-                local diffColor = ternary(difficulty == "N", colors["green"], ternary(difficulty == "H", colors["blue"], colors["purple"]))
-                lineLeft = diffColor .. difficulty .. " " .. colors["white"] .. boss
-                lineRight = scoreColor .. rank .. "%"
-            end
+local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
+    local raidName = db.RaidName[raid]
+    local bosses = db.char[unitRealm][unitName][raid]
+    if (bosses) then
+        if (addLineBefore) then
+            frame:AddLine(" ")
         end
-        if lineLeft == "" then
-            frame:AddDoubleLine(colors.grey .. "- " .. colors.white .. boss, colors.grey .. "N/A")
-        else
-            frame:AddDoubleLine(lineLeft, lineRight)
+        frame:AddLine(raidName)
+
+        for i = 0, #extBosses[raid] do
+            local bossName = extBosses[raid][i]
+            local bossID = db.BossId[raid][bossName]
+            local difficulties = bosses[bossID]
+            local maxDifficulty = 0
+            local lineLeft = ""
+            local lineRight = ""
+
+            -- If there is an error with line 51, expecting table got nil, uncomment bellow lines
+            -- print("---------- " .. bossName .. " ----------")
+            -- DevTools_Dump(difficulties)
+
+            for difficulty, datas in pairs(difficulties) do
+                local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
+                local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
+                if (difficulty > maxDifficulty and datas["best"] > 0) then
+                    maxDifficulty = difficulty
+                    local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
+                    lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
+                    lineRight = scoreColor .. datas["best"] .. "%"
+                end
+            end
+            if lineLeft == "" then
+                frame:AddDoubleLine(colors.grey .. "- " .. colors.white .. bossName, "")
+            else
+                frame:AddDoubleLine(lineLeft, lineRight)
+            end
         end
     end
 end
@@ -59,7 +71,7 @@ local function InitAddon(unitName, unitRealm)
     local frame = WarLogs or CreateFrame("GameTooltip", "WarLogs", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
-    if (not db[string.lower(unitRealm)] or not db[string.lower(unitRealm)][unitName]) then
+    if (not db.char[unitRealm] or not db.char[unitRealm][unitName]) then
         return frame
     end
 
@@ -74,11 +86,9 @@ local function InitAddon(unitName, unitRealm)
     frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
     frame:AddLine(" ")
 
-    ProcessRaid("Sepulcher of the First Ones", frame, unitRealm, unitName)
-    frame:AddLine(" ")
-    ProcessRaid("Sanctum of Domination", frame, unitRealm, unitName)
-    frame:AddLine(" ")
-    ProcessRaid("Castle Nathria", frame, unitRealm, unitName)
+    ProcessRaid(29, frame, unitRealm, unitName)
+    ProcessRaid(28, frame, unitRealm, unitName, true)
+    ProcessRaid(26, frame, unitRealm, unitName, true)
 
     return frame
 end
@@ -129,5 +139,39 @@ GameTooltip:HookScript(
     "OnHide",
     function()
         local tt = InitAddon(playerName, playerRealm)
+    end
+)
+
+local hooked = {}
+
+local function OnEnterHook(self)
+    print("On a quelque chose, c'est déjà ça")
+    if not self.tooltip then
+        -- The original OnEnter script doesn't show a tooltip in this case,
+        -- so we should exit here, instead of adding text to a tooltip that
+        -- isn't shown or, worse, is currently shown by something else.
+        return
+    end
+
+    print("hop hop add line tooltip")
+    GameTooltip:AddLine("hello world")
+    GameTooltip:Show()
+end
+
+hooksecurefunc(
+    "LFGListApplicationViewer_UpdateResults",
+    function(self)
+        for k, v in pairs(self) do
+            print(k, v)
+        end
+        -- DevTools_Dump(self.scrollBox)
+        -- local buttons = self.ScrollFrame.buttons
+        -- for i = 1, #buttons do
+        --     local button = buttons[i]
+        --     if not hooked[button] then
+        --         button:HookScript("OnEnter", OnEnterHook)
+        --         hooked[button] = true
+        --     end
+        -- end
     end
 )
