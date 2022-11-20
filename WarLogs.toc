@@ -35,6 +35,7 @@
 ########## DB ##########
 db\WL_raids.lua
 db\WL_EU.lua
+db\aws-test.lua
 
 ########## Addon ##########
 WarLogs.lua
