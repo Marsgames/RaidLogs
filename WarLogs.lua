@@ -34,7 +34,11 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         if (addLineBefore) then
             frame:AddLine(" ")
         end
-        frame:AddLine(raidName)
+        local role = bosses[db.BossId[raid][extBosses[raid][0]]][3]["metric"]
+        local TankIcon = IconClass("Interface\\LFGFRAME\\UI-LFG-ICON-PORTRAITROLES.blp", 64, 64, 0, 0 + 19, 22, 22 + 19) -- should not appear
+        local HealerIcon = IconClass("Interface\\LFGFRAME\\UI-LFG-ICON-PORTRAITROLES.blp", 64, 64, 19, 19 + 19, 1, 1 + 19)
+        local DPSIcon = IconClass("Interface\\LFGFRAME\\UI-LFG-ICON-PORTRAITROLES.blp", 64, 64, 19, 19 + 19, 22, 22 + 19)
+        frame:AddDoubleLine(raidName, ternary(role == "dps", DPSIcon:GetIconString(), ternary(role == "hps", HealerIcon:GetIconString(), TankIcon:GetIconString())))
 
         for i = 0, #extBosses[raid] do
             local bossName = extBosses[raid][i]
@@ -59,7 +63,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
                 end
             end
             if lineLeft == "" then
-                frame:AddDoubleLine(colors.grey .. "- " .. colors.white .. bossName, "")
+                frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
             else
                 frame:AddDoubleLine(lineLeft, lineRight)
             end
@@ -83,7 +87,11 @@ local function InitAddon(unitName, unitRealm)
         frame:SetPoint("TOPLEFT", PVEFrame, "TOPRIGHT", 0, 0)
     end
 
-    frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
+    if (unitName == "Niisha" and unitRealm == "Temple noir") or (unitName == "Tempaxe" and unitRealm == "Temple noir") or (unitName == "Mío" and unitRealm == "Hyjal") then
+        frame:AddLine(colors.green .. unitName .. colors.white .. " - " .. colors.blue .. unitRealm .. colors.white .. " | " .. colors.purple .. "Author")
+    else
+        frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
+    end
     frame:AddLine(" ")
 
     ProcessRaid(29, frame, unitRealm, unitName)
@@ -142,36 +150,36 @@ GameTooltip:HookScript(
     end
 )
 
-local hooked = {}
+-- local hooked = {}
 
-local function OnEnterHook(self)
-    print("On a quelque chose, c'est déjà ça")
-    if not self.tooltip then
-        -- The original OnEnter script doesn't show a tooltip in this case,
-        -- so we should exit here, instead of adding text to a tooltip that
-        -- isn't shown or, worse, is currently shown by something else.
-        return
-    end
+-- local function OnEnterHook(self)
+--     print("On a quelque chose, c'est déjà ça")
+--     if not self.tooltip then
+--         -- The original OnEnter script doesn't show a tooltip in this case,
+--         -- so we should exit here, instead of adding text to a tooltip that
+--         -- isn't shown or, worse, is currently shown by something else.
+--         return
+--     end
 
-    print("hop hop add line tooltip")
-    GameTooltip:AddLine("hello world")
-    GameTooltip:Show()
-end
+--     print("hop hop add line tooltip")
+--     GameTooltip:AddLine("hello world")
+--     GameTooltip:Show()
+-- end
 
-hooksecurefunc(
-    "LFGListApplicationViewer_UpdateResults",
-    function(self)
-        for k, v in pairs(self) do
-            print(k, v)
-        end
-        -- DevTools_Dump(self.scrollBox)
-        -- local buttons = self.ScrollFrame.buttons
-        -- for i = 1, #buttons do
-        --     local button = buttons[i]
-        --     if not hooked[button] then
-        --         button:HookScript("OnEnter", OnEnterHook)
-        --         hooked[button] = true
-        --     end
-        -- end
-    end
-)
+-- hooksecurefunc(
+--     "LFGListApplicationViewer_UpdateResults",
+--     function(self)
+--         for k, v in pairs(self) do
+--             print(k, v)
+--         end
+--         -- DevTools_Dump(self.scrollBox)
+--         -- local buttons = self.ScrollFrame.buttons
+--         -- for i = 1, #buttons do
+--         --     local button = buttons[i]
+--         --     if not hooked[button] then
+--         --         button:HookScript("OnEnter", OnEnterHook)
+--         --         hooked[button] = true
+--         --     end
+--         -- end
+--     end
+-- )
