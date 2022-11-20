@@ -27,6 +27,34 @@ local function ternary(condition, ifTrue, ifFalse)
     end
 end
 
+local function ProcessRaid(raid, frame, unitRealm, unitName)
+    local bosses = db[string.lower(unitRealm)][unitName][raid]
+    frame:AddLine(raid)
+
+    for i = 0, #extBosses[raid] do
+        local boss = extBosses[raid][i]
+        local difficulties = bosses[boss]
+        local maxDifficulty = "-"
+        local lineLeft = ""
+        local lineRight = ""
+
+        for difficulty, rank in pairs(difficulties) do
+            local scoreColor = ternary(difficulties[difficulty] < 25, colors["grey"], ternary(difficulties[difficulty] < 50, colors["green"], ternary(difficulties[difficulty] < 75, colors["blue"], ternary(difficulties[difficulty] < 95, colors["purple"], ternary(difficulties[difficulty] < 99, colors["orange"], ternary(difficulties[difficulty] < 100, colors.pink, colors["herloom"]))))))
+            if (maxDifficulty == "-" and rank > 0) then
+                maxDifficulty = difficulty
+                local diffColor = ternary(difficulty == "N", colors["green"], ternary(difficulty == "H", colors["blue"], colors["purple"]))
+                lineLeft = diffColor .. difficulty .. " " .. colors["white"] .. boss
+                lineRight = scoreColor .. rank .. "%"
+            end
+        end
+        if lineLeft == "" then
+            frame:AddDoubleLine(colors.grey .. "- " .. colors.white .. boss, colors.grey .. "N/A")
+        else
+            frame:AddDoubleLine(lineLeft, lineRight)
+        end
+    end
+end
+
 local function InitAddon(unitName, unitRealm)
     local frame = WarLogs or CreateFrame("GameTooltip", "WarLogs", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
@@ -46,38 +74,11 @@ local function InitAddon(unitName, unitRealm)
     frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
     frame:AddLine(" ")
 
-    local raidCount = 0
-    for raid, bosses in pairs(db[string.lower(unitRealm)][unitName]) do
-        raidCount = raidCount + 1
-        frame:AddLine(raid)
-
-        for i = 0, #extBosses[raid] do
-            local boss = extBosses[raid][i]
-            local difficulties = bosses[boss]
-            local maxDifficulty = "-"
-            local lineLeft = ""
-            local lineRight = ""
-
-            for difficulty, rank in pairs(difficulties) do
-                local scoreColor = ternary(difficulties[difficulty] < 25, colors["grey"], ternary(difficulties[difficulty] < 50, colors["green"], ternary(difficulties[difficulty] < 75, colors["blue"], ternary(difficulties[difficulty] < 95, colors["purple"], ternary(difficulties[difficulty] < 99, colors["orange"], ternary(difficulties[difficulty] < 100, colors.pink, colors["herloom"]))))))
-                if (maxDifficulty == "-" and rank > 0) then
-                    maxDifficulty = difficulty
-                    local diffColor = ternary(difficulty == "N", colors["green"], ternary(difficulty == "H", colors["blue"], colors["purple"]))
-                    lineLeft = diffColor .. difficulty .. " " .. colors["white"] .. boss
-                    lineRight = scoreColor .. rank .. "%"
-                end
-            end
-            if lineLeft == "" then
-                frame:AddDoubleLine(colors.grey .. "- " .. colors.white .. boss, colors.grey .. "N/A")
-            else
-                frame:AddDoubleLine(lineLeft, lineRight)
-            end
-        end
-
-        if raidCount < 3 then
-            frame:AddLine(" ")
-        end
-    end
+    ProcessRaid("Sepulcher of the First Ones", frame, unitRealm, unitName)
+    frame:AddLine(" ")
+    ProcessRaid("Sanctum of Domination", frame, unitRealm, unitName)
+    frame:AddLine(" ")
+    ProcessRaid("Castle Nathria", frame, unitRealm, unitName)
 
     return frame
 end
@@ -110,11 +111,15 @@ GameTooltip:HookScript(
             if (not containsSpace) then
                 local id = C_LFGList.GetActiveEntryInfo().activityID
                 local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
-                local tt = InitAddon("Niisha", "Temple Noir")
+                local tt = InitAddon(name, realm)
                 if (not IsAddOnLoaded("RaiderIO")) then
                     tt:ClearAllPoints()
                     tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
+                end
+                if (name and realm) then
                     tt:Show()
+                else
+                    tt:Hide()
                 end
             end
         end
