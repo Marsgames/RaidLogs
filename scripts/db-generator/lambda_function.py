@@ -3,6 +3,7 @@ import decimal
 from pymongo import MongoClient
 
 git_repo_url = "https://{0}@github.com/Marsgames/WarLogs.git"
+git_repo_path = "/tmp/WarLogs"
 
 def get_mongo_db():
     MONGO_USER = os.environ['MONGO_USER']
@@ -29,8 +30,12 @@ def get_all_players(db):
     return players
 
 def clone_git_repo():
-    print(f"Cloning git repo...")
-    os.system(f"git clone {git_repo_url.format(os.environ['GIT_TOKEN'])} /tmp/WarLogs")
+    if os.path.exists(git_repo_path):
+        print(f"Git repo already cloned, pulling...")
+        os.system(f"cd {git_repo_path} && git pull")
+    else:
+        print(f"Cloning git repo...")
+        os.system(f"git clone {git_repo_url.format(os.environ['GIT_TOKEN'])} {git_repo_path}")
 
 def dump_lua(data):
     if type(data) is str:
@@ -71,7 +76,7 @@ def transform_player_data(player):
     return tmp_player_data
 
 def generate_db(players):
-    db_file = open("/tmp/WarLogs/db/aws-test.lua", "w")
+    db_file = open(f"{git_repo_path}/db/aws-test.lua", "w")
     
     tmp_db = {}
     for player in players: 
@@ -89,7 +94,7 @@ def generate_db(players):
 
 def commit():
     print(f"Commiting new db...")
-    os.system(f"cd /tmp/WarLogs && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' && git push")
+    os.system(f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' && git push")
 
 def lambda_handler(event, ctx):
     clone_git_repo()
