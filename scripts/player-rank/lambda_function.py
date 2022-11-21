@@ -3,8 +3,10 @@ import requests
 import json
 from datetime import datetime, timedelta
 from pymongo import MongoClient, UpdateOne
-from pymongo.errors import BulkWriteError
 import os
+
+#The number of point used per request to WCL, approximative, this is used to stop a bit before the limit by multiplying with the number of message to process
+api_call_budget = int(os.environ['WCL_CALL_BUDGET'])
 
 last_auth = datetime.now() - timedelta(hours=2)
 auth_token = ""
@@ -252,6 +254,11 @@ wcl_api_limit_query = "{\"query\": \"query {  \
     } \
 }\"}"
 mongo_client = None
+lambda_client = boto3.client('lambda')
+lambda_function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
+scheduler_reviver_name = os.environ['SCHEDULER_REVIVER_NAME']
+scheduler_client = boto3.client('scheduler')
+
 class Player:
     def __init__(self, player_data, id, rank):
         self.load_data_from_json(player_data, id, rank)
@@ -347,38 +354,71 @@ def upsert_players(players):
     res = mongo_client.players.bulk_write(requests, ordered=False)
     print(res.bulk_api_result)
 
-def get_api_limit():
+def get_remaining_wcl_points():
+    global auth_token
+    if datetime.now() - timedelta(hours=1) > last_auth:
+        auth_token = get_auth_token()
+    
     headers = {
         'Authorization': f'Bearer {auth_token}',
         'Content-Type': 'application/json'
     }
     response = requests.request("POST", wcl_api_url, headers=headers, data=wcl_api_limit_query)
+    
+    if not response.ok and response.status_code == 429:
+        return {"data": { "rateLimitData": { "limitPerHour": 72000, "pointsSpentThisHour": 72000, "pointsResetIn": 1800 }}}
 
-    print(response.json())
+    return response.json()
+
+def can_i_run(msg_count, concurrency_count, wcl_api_budget):
+    remaining_wcl_api_points = wcl_api_budget["data"]["rateLimitData"]["limitPerHour"] - wcl_api_budget["data"]["rateLimitData"]["pointsSpentThisHour"]
+    print(f"Budget - MSG Count : {msg_count} - Current Concurrency : {concurrency_count} - API Call Budget : {api_call_budget} - Remaining Points : {remaining_wcl_api_points}")
+
+    #At any time we can assume that the function can run completely if API Limit > Lambda Instance Concurrency * api_call_budget * nb_msg
+    if remaining_wcl_api_points > concurrency_count * api_call_budget * msg_count:
+        return True
+    else:
+        return False
+
+def scheduler_reviver_run(resetIn):
+    response = scheduler_client.get_schedule(
+        Name=scheduler_reviver_name
+    )
+    print(response)
+
+
+def decrease_lambda_concurrency(concurrency_count):
+    lambda_client.put_function_concurrency(FunctionName=lambda_function_name, ReservedConcurrentExecutions=concurrency_count-1)
 
 def lambda_handler(event, ctx):
-    if mongo_client == None:
-        connect_mongo()
-    
-    if os.environ['DEBUG_API_LIMIT'] == "True":
-        global auth_token
-        if datetime.now() - timedelta(hours=1) > last_auth:
-            auth_token = get_auth_token()
-        get_api_limit()
-    
-    print(f"Starting with {len(event['Records'])} new messages")
+    concurrency_count = lambda_client.get_function_concurrency(lambda_function_name)["ReservedConcurrentExecutions"]
+    api_budget = get_remaining_wcl_points()
 
-    players = {}
+    if can_i_run(len(event['Records']), concurrency_count, api_budget):
+        print("Enough budget to handle all the calls, proceeding with players...")
+        if mongo_client == None:
+            connect_mongo()
 
-    for record in event['Records']:
-        playerRankMsg = json.loads(record["body"])
-        players = get_players_stats_for_player(playerRankMsg, players)
-        sqs.delete_message(
-            QueueUrl=sqs_reports_queue,
-            ReceiptHandle=record["receiptHandle"]
-        )
-    
-    upsert_players(players)
-    return {
-        'statusCode': 200
-    }
+        print(f"Starting with {len(event['Records'])} new messages")
+
+        players = {}
+
+        for record in event['Records']:
+            playerRankMsg = json.loads(record["body"])
+            players = get_players_stats_for_player(playerRankMsg, players)
+            sqs.delete_message(
+                QueueUrl=sqs_reports_queue,
+                ReceiptHandle=record["receiptHandle"]
+            )
+        
+        upsert_players(players)
+
+        return {
+            'statusCode': 200
+        }
+    else:
+        print("Not enough budget to handle all the calls decreasing concurrency...")
+        decrease_lambda_concurrency(concurrency_count)
+        if concurrency_count == 1:
+            print(f"Lambda has been disabled, scheduling the reviver func to run in {api_budget['data']['rateLimitData']['pointsResetIn']} seconds")
+            scheduler_reviver_run(api_budget["data"]["rateLimitData"]["pointsResetIn"])
