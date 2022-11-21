@@ -38,5 +38,4 @@ db\WL_EU.lua
 db\aws-test.lua
 
 ########## Addon ##########
-IconClass.lua
 WarLogs.lua
