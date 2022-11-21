@@ -96,27 +96,21 @@ local function InitAddon(unitName, unitRealm)
     end
     frame:AddLine(" ")
 
-    -- Check if LFG
-    -- Get current raid
-    -- show data for the right raid
-    -- TODO: Find a way to get english raid name
-    if (not C_LFGList.GetActiveEntryInfo() == nil) and not (unitName == playerName and unitRealm == playerRealm) then
-        -- end
-        -- local infos = C_LFGList.GetActiveEntryInfo()
-        -- local id = infos.activityID
-        -- local localizedName = C_LFGList.GetActivityInfoTable(id).fullName
-        -- -- from localizedName remove " (some text)"
-        -- localizedName = string.gsub(localizedName, " %(.-%)", "")
-        -- -- local englishName = ?
-        -- local raidID = db.RaidID[englishName]
-        -- local raidID = 28
+    if not (C_LFGList.GetActiveEntryInfo() == nil) and not (unitName == playerName and unitRealm == playerRealm) then
+        local infos = C_LFGList.GetActiveEntryInfo()
+        local it = C_LFGList.GetActivityInfoTable(infos.activityID)
+        local grpID = it.groupFinderActivityGroupID
 
-        -- if (not IsAltKeyDown()) then
-        --     ProcessRaid(raidID, frame, unitRealm, unitName, false)
-        -- else
-        ProcessRaid(29, frame, unitRealm, unitName)
-        ProcessRaid(28, frame, unitRealm, unitName, true)
-        ProcessRaid(26, frame, unitRealm, unitName, true)
+        local englishName = db.GrpID[grpID]
+        local raidID = db.RaidID[englishName]
+
+        if (not IsAltKeyDown()) and not (englishName == nil) then
+            ProcessRaid(raidID, frame, unitRealm, unitName, false)
+        else
+            ProcessRaid(29, frame, unitRealm, unitName)
+            ProcessRaid(28, frame, unitRealm, unitName, true)
+            ProcessRaid(26, frame, unitRealm, unitName, true)
+        end
     else
         ProcessRaid(29, frame, unitRealm, unitName)
         ProcessRaid(28, frame, unitRealm, unitName, true)
