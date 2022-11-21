@@ -141,6 +141,7 @@ PVEFrame:HookScript(
 GameTooltip:HookScript(
     "OnShow",
     function()
+        -- TODO: Issue if the realm is the same as the current player
         local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
         -- Name contains space
         if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
