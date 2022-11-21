@@ -1,30 +1,32 @@
-import boto3
 import os
 import decimal
+from pymongo import MongoClient
 
-dynamo = boto3.resource('dynamodb')
-wcl_table = dynamo.Table('wcl-statistics')
 git_repo_url = "https://{0}@github.com/Marsgames/WarLogs.git"
-def get_all_players():
-    print(f"Retrieving all player from DynamoDB")
 
-    results = []
-    nextPageKey = None
-    while True:
-        dbPage = wcl_table.scan(Limit=25)
+def get_mongo_db():
+    MONGO_USER = os.environ['MONGO_USER']
+    MONGO_PASSWORD = os.environ['MONGO_PASSWORD']
+    MONGO_PORT = os.environ['MONGO_PORT']
 
-        if "LastEvaluatedKey" in dbPage:
-            nextPageKey = dbPage["LastEvaluatedKey"]
-        else: 
-            nextPageKey = None
-        
-        results += dbPage["Items"]
+    client = MongoClient(
+        f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@149.202.45.54:{MONGO_PORT}/?authMechanism=DEFAULT",
+        serverSelectionTimeoutMS=2500
+    )
+    try:
+        # The ping command is cheap and does not require auth.
+        client.admin.command("ping")
+        return client.wcl
+    except Exception as e:
+        print(f"Unable to connect to server:\n\t{e}")
 
-        if nextPageKey == None or len(results) > int(os.environ['WCL_PLAYERS_LIMIT']):
-            break
+def get_all_players(db):
+    print(f"Retrieving all player from MongoDB")
+    players = list(db.players.find({}))
     
-    print(f"Found {len(results)} players")
-    return results
+    print(f"Found {len(players)} players")
+
+    return players
 
 def clone_git_repo():
     print(f"Cloning git repo...")
@@ -51,7 +53,7 @@ def dump_lua(data):
 def transform_player_data(player):
     tmp_player_data = {}
 
-    for raid in player["raids"]:
+    for raid in player["raids"].values():
         if raid["zone"] not in tmp_player_data:
             tmp_player_data[raid["zone"]] = {}
         
@@ -91,7 +93,8 @@ def commit():
 
 def lambda_handler(event, ctx):
     clone_git_repo()
-    players = get_all_players()
+    db = get_mongo_db()
+    players = get_all_players(db)
     generate_db(players)
     commit()
     return {
