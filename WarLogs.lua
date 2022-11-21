@@ -48,18 +48,20 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
             local lineLeft = ""
             local lineRight = ""
 
-            -- If there is an error with line 51, expecting table got nil, uncomment bellow lines
+            -- If there is an error with line 55, expecting table got nil, uncomment bellow lines
             -- print("---------- " .. bossName .. " ----------")
             -- DevTools_Dump(difficulties)
 
-            for difficulty, datas in pairs(difficulties) do
-                local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
-                local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
-                if (difficulty > maxDifficulty and datas["best"] > 0) then
-                    maxDifficulty = difficulty
-                    local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
-                    lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
-                    lineRight = scoreColor .. datas["best"] .. "%"
+            if (difficulties) then
+                for difficulty, datas in pairs(difficulties) do
+                    local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
+                    local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
+                    if (difficulty > maxDifficulty and datas["best"] > 0) then
+                        maxDifficulty = difficulty
+                        local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
+                        lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
+                        lineRight = scoreColor .. datas["best"] .. "%"
+                    end
                 end
             end
             if lineLeft == "" then
