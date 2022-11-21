@@ -1,5 +1,5 @@
 ## Interface: 100002
-## Title: |cFF00FF00GWarLogs|r
+## Title: |cFF00FF00WarLogs|r
 ## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
 ## Notes-enUS: Show you Warcraft Logs ranking in game 
 ## Author:  Marsgames & Tempaxe & Mío
