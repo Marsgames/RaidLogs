@@ -2,11 +2,12 @@ import boto3
 import requests
 import json
 from datetime import datetime, timedelta
+from pymongo import MongoClient, UpdateOne
+from pymongo.errors import BulkWriteError
+import os
 
 last_auth = datetime.now() - timedelta(hours=2)
 auth_token = ""
-dynamo = boto3.resource('dynamodb')
-wcl_table = dynamo.Table('wcl-statistics')
 wcl_token_url = "https://www.warcraftlogs.com/oauth/token"
 wcl_token_payload={'grant_type': 'client_credentials'}
 sqs_reports_queue = "https://sqs.us-east-1.amazonaws.com/697133125351/wcl-discovered-players"
@@ -59,9 +60,9 @@ wcl_alias_to_encounter_mapping = {
     "Remnant_of_Ner__zhul_N" : 2432,
     "Remnant_of_Ner__zhul_H" : 2432,
     "Remnant_of_Ner__zhul_M" : 2432,
-    "Soulrender_Dormazain_N" : 2432,
-    "Soulrender_Dormazain_H" : 2432,
-    "Soulrender_Dormazain_M" : 2432,
+    "Soulrender_Dormazain_N" : 2434,
+    "Soulrender_Dormazain_H" : 2434,
+    "Soulrender_Dormazain_M" : 2434,
     "Painsmith_Raznal_N" : 2430,
     "Painsmith_Raznal_H" : 2430,
     "Painsmith_Raznal_M" : 2430,
@@ -83,9 +84,9 @@ wcl_alias_to_encounter_mapping = {
     "Dausegne____The_Fallen_Oracle_N" : 2540,
     "Dausegne____The_Fallen_Oracle_H" : 2540,
     "Dausegne____The_Fallen_Oracle_M" : 2540,
-    "Artificer_Xy__Mox_N" : 2553,
-    "Artificer_Xy__Mox_H" : 2553,
-    "Artificer_Xy__Mox_M" : 2553,
+    "Artificer_Xy__Mox_ComeBack_N" : 2553,
+    "Artificer_Xy__Mox_ComeBack_H" : 2553,
+    "Artificer_Xy__Mox_ComeBack_M" : 2553,
     "Prototype_Pantheon_N" : 2544,
     "Prototype_Pantheon_H" : 2544,
     "Prototype_Pantheon_M" : 2544,
@@ -121,34 +122,34 @@ wcl_queries = {
                     name \
                 }}, \
                 Shriekwing_N: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 3) \
-                Huntsman_Altimor_N: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 3) \
-                Hungering_Destroyer_N: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 3) \
-                Sun_King__s_Salvation_N: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 3) \
-                Artificer_Xy__Mox_N: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 3) \
-                Lady_Inerva_Darkvein_N: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 3) \
-                The_Council_of_Blood_N: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 3) \
-                Sludgefist_N: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 3) \
-                Stone_Legion_Generals_N: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 3) \
-                Sire_Denathrius_N: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 3) \
                 Shriekwing_H: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 4) \
-                Huntsman_Altimor_H: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 4) \
-                Hungering_Destroyer_H: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 4) \
-                Sun_King__s_Salvation_H: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 4) \
-                Artificer_Xy__Mox_H: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 4) \
-                Lady_Inerva_Darkvein_H: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 4) \
-                The_Council_of_Blood_H: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 4) \
-                Sludgefist_H: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 4) \
-                Stone_Legion_Generals_H: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 4) \
-                Sire_Denathrius_H: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 4) \
                 Shriekwing_M: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 5) \
+                Huntsman_Altimor_N: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 3) \
+                Huntsman_Altimor_H: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 4) \
                 Huntsman_Altimor_M: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 5) \
+                Hungering_Destroyer_N: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 3) \
+                Hungering_Destroyer_H: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 4) \
                 Hungering_Destroyer_M: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 5) \
+                Sun_King__s_Salvation_N: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 3) \
+                Sun_King__s_Salvation_H: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 4) \
                 Sun_King__s_Salvation_M: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 5) \
+                Artificer_Xy__Mox_N: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 3) \
+                Artificer_Xy__Mox_H: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 4) \
                 Artificer_Xy__Mox_M: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 5) \
+                Lady_Inerva_Darkvein_N: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 3) \
+                Lady_Inerva_Darkvein_H: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 4) \
                 Lady_Inerva_Darkvein_M: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 5) \
+                The_Council_of_Blood_N: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 3) \
+                The_Council_of_Blood_H: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 4) \
                 The_Council_of_Blood_M: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 5) \
+                Sludgefist_N: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 3) \
+                Sludgefist_H: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 4) \
                 Sludgefist_M: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 5) \
+                Stone_Legion_Generals_N: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 3) \
+                Stone_Legion_Generals_H: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 4) \
                 Stone_Legion_Generals_M: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 5) \
+                Sire_Denathrius_N: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 3) \
+                Sire_Denathrius_H: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 4) \
                 Sire_Denathrius_M: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 5) \
         }} \
     }} \
@@ -173,9 +174,9 @@ wcl_queries = {
                 Remnant_of_Ner__zhul_N: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 3) \
                 Remnant_of_Ner__zhul_H: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 4) \
                 Remnant_of_Ner__zhul_M: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 5) \
-                Soulrender_Dormazain_N: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 3) \
-                Soulrender_Dormazain_H: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 4) \
-                Soulrender_Dormazain_M: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 5) \
+                Soulrender_Dormazain_N: encounterRankings(byBracket: true, encounterID: 2434, compare: Parses, difficulty: 3) \
+                Soulrender_Dormazain_H: encounterRankings(byBracket: true, encounterID: 2434, compare: Parses, difficulty: 4) \
+                Soulrender_Dormazain_M: encounterRankings(byBracket: true, encounterID: 2434, compare: Parses, difficulty: 5) \
                 Painsmith_Raznal_N: encounterRankings(byBracket: true, encounterID: 2430, compare: Parses, difficulty: 3) \
                 Painsmith_Raznal_H: encounterRankings(byBracket: true, encounterID: 2430, compare: Parses, difficulty: 4) \
                 Painsmith_Raznal_M: encounterRankings(byBracket: true, encounterID: 2430, compare: Parses, difficulty: 5) \
@@ -208,9 +209,9 @@ wcl_queries = {
                 Dausegne____The_Fallen_Oracle_N: encounterRankings(byBracket: true, encounterID: 2540, compare: Parses, difficulty: 3) \
                 Dausegne____The_Fallen_Oracle_H: encounterRankings(byBracket: true, encounterID: 2540, compare: Parses, difficulty: 4) \
                 Dausegne____The_Fallen_Oracle_M: encounterRankings(byBracket: true, encounterID: 2540, compare: Parses, difficulty: 5) \
-                Artificer_Xy__Mox_N: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 3) \
-                Artificer_Xy__Mox_H: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 4) \
-                Artificer_Xy__Mox_M: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 5) \
+                Artificer_Xy__Mox_ComeBack_N: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 3) \
+                Artificer_Xy__Mox_ComeBack_H: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 4) \
+                Artificer_Xy__Mox_ComeBack_M: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 5) \
                 Prototype_Pantheon_N: encounterRankings(byBracket: true, encounterID: 2544, compare: Parses, difficulty: 3) \
                 Prototype_Pantheon_H: encounterRankings(byBracket: true, encounterID: 2544, compare: Parses, difficulty: 4) \
                 Prototype_Pantheon_M: encounterRankings(byBracket: true, encounterID: 2544, compare: Parses, difficulty: 5) \
@@ -240,6 +241,14 @@ wcl_queries = {
 }}\"}}"
 }
 
+wcl_api_limit_query = "{\"query\": \"query {  \
+    rateLimitData { \
+        limitPerHour \
+        pointsSpentThisHour \
+        pointsResetIn \
+    } \
+}\"}"
+mongo_client = None
 class Player:
     def __init__(self, player_data, id, rank):
         self.load_data_from_json(player_data, id, rank)
@@ -269,6 +278,23 @@ class Player:
 
         self.append_raids_data(player_data, rank) 
 
+def connect_mongo():
+    global mongo_client
+    MONGO_USER = os.environ['MONGO_USER']
+    MONGO_PASSWORD = os.environ['MONGO_PASSWORD']
+    MONGO_PORT = os.environ['MONGO_PORT']
+
+    client = MongoClient(
+        f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@149.202.45.54:{MONGO_PORT}/?authMechanism=DEFAULT",
+        serverSelectionTimeoutMS=2500
+    )
+    try:
+        # The ping command is cheap and does not require auth.
+        client.admin.command("ping")
+        mongo_client = client.wcl
+    except Exception as e:
+        print(f"Unable to connect to server:\n\t{e}")
+
 def get_auth_token():
     global last_auth
     last_auth = datetime.now()
@@ -290,7 +316,10 @@ def get_players_stats_for_player(playerRankMsg, players):
         query = wcl_queries[int(raidId)]
 
         response = requests.request("POST", wcl_api_url, headers=headers, data=query.format(playerId))
-        
+
+        if not response.ok:
+            raise Exception(f"Bad reponse from WCL (code {response.status_code}), probably limit reached") 
+
         player_data = response.json()["data"]["characterData"]["character"]
         
         if playerId in players:
@@ -300,25 +329,43 @@ def get_players_stats_for_player(playerRankMsg, players):
     return players
 
 def upsert_players(players):
-    print(f"Saving {len(players)} players to DynamoDB")
-    batch_keys = {
-        wcl_table.name: {
-            'Keys': [{'id': player.id} for player in players]
-        }
-    }
+    print(f"Saving {len(players)} players to MongoDB")
 
-    response = dynamo.batch_get_item(RequestItems=batch_keys)
-    for existingPlayer in response["Responses"][wcl_table.name]:
-        print(existingPlayer)
-        #wcl_table.put_item(Item=player.__dict__)
-    #Limit batching, because in free tier too fast it reach DynamoDB limit
-    #with wcl_table.batch_writer() as batch:
-        #for player in players.values():
-            #batch.put_item(Item=player.__dict__)
+    requests = []
+    for player in players.values():
+        set = { "name": player.name, "server": player.server }
+        for raid, v in player.raids.items():
+            set[f"raids.{raid}"] = v 
+        requests.append(
+            UpdateOne({"_id": player.id}, {"$set": set}, upsert=True)
+        )
+    
+    res = mongo_client.players.bulk_write(requests, ordered=False)
+    print(res.bulk_api_result)
+
+def get_api_limit():
+    headers = {
+        'Authorization': f'Bearer {auth_token}',
+        'Content-Type': 'application/json'
+    }
+    response = requests.request("POST", wcl_api_url, headers=headers, data=wcl_api_limit_query)
+
+    print(response.json())
 
 def lambda_handler(event, ctx):
+    if mongo_client == None:
+        connect_mongo()
+    
+    if os.environ['DEBUG_API_LIMIT'] == "True":
+        global auth_token
+        if datetime.now() - timedelta(hours=1) > last_auth:
+            auth_token = get_auth_token()
+        get_api_limit()
+    
     print(f"Starting with {len(event['Records'])} new messages")
+
     players = {}
+
     for record in event['Records']:
         playerRankMsg = json.loads(record["body"])
         players = get_players_stats_for_player(playerRankMsg, players)
