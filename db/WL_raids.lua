@@ -16,6 +16,8 @@ db.RaidID = {
     ["Vault of the Incarnates"] = 31
 }
 
+-- To get groups id :
+-- https://wow.tools/dbc/?dbc=groupfinderactivity
 db.GrpID = {
     [267] = "Castle Nathria",
     [271] = "Sanctum of Domination",
