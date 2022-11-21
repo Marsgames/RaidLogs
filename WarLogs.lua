@@ -96,9 +96,18 @@ local function InitAddon(unitName, unitRealm)
     end
     frame:AddLine(" ")
 
+    -- Check if LFG
+    -- Get current raid
+    -- show data for the right raid
+    -- if (not C_LFGList.GetActiveEntryInfo()  == nil) then
+
+    -- end
+
     ProcessRaid(29, frame, unitRealm, unitName)
-    ProcessRaid(28, frame, unitRealm, unitName, true)
-    ProcessRaid(26, frame, unitRealm, unitName, true)
+    if (unitName == playerName and unitRealm == playerRealm) or (IsAltKeyDown()) then
+        ProcessRaid(28, frame, unitRealm, unitName, true)
+        ProcessRaid(26, frame, unitRealm, unitName, true)
+    end
 
     return frame
 end
@@ -151,6 +160,20 @@ GameTooltip:HookScript(
         local tt = InitAddon(playerName, playerRealm)
     end
 )
+
+local function OnModifierStateChange(self, event, key, status)
+    if (key == "LALT") then
+        local tt = InitAddon(playerName, playerRealm)
+        if (pveFrameIsShown) then
+            tt:Show()
+        else
+            tt:Hide()
+        end
+    end
+end
+local f = CreateFrame("Frame")
+f:RegisterEvent("MODIFIER_STATE_CHANGED")
+f:SetScript("OnEvent", OnModifierStateChange)
 
 -- local hooked = {}
 
