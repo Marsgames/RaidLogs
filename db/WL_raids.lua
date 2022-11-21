@@ -9,6 +9,12 @@ db.RaidName = {
     [29] = "Sepulcher of the First Ones",
     [31] = "Vault of the Incarnates"
 }
+db.RaidID = {
+    ["Castle Nathria"] = 26,
+    ["Sanctum of Domination"] = 28,
+    ["Sepulcher of the First Ones"] = 29,
+    ["Vault of the Incarnates"] = 31
+}
 db.BossName = {
     [26] = {
         [2398] = "Shriekwing",
