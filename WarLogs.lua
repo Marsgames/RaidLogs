@@ -172,6 +172,9 @@ GameTooltip:HookScript(
     "OnHide",
     function()
         local tt = InitAddon(playerName, playerRealm)
+        if (pveFrameIsShown) then
+            tt:Show()
+        end
     end
 )
 
