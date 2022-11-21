@@ -21,13 +21,11 @@ def get_mongo_db():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
-def get_all_players(db):
+def get_all_players_cursor(db):
     print(f"Retrieving all player from MongoDB")
-    players = list(db.players.find({}))
-    
-    print(f"Found {len(players)} players")
-
-    return players
+    cursor = db.players.find(batch_size=1000)
+    print(f"Cursor generated")
+    return cursor
 
 def clone_git_repo():
     if os.path.exists(git_repo_path):
@@ -75,32 +73,56 @@ def transform_player_data(player):
     
     return tmp_player_data
 
-def generate_db(players):
-    db_file = open(f"{git_repo_path}/db/aws-test.lua", "w")
-    
-    tmp_db = {}
-    for player in players: 
-        transformed_data = transform_player_data(player)
+def generate_db(cursor):
+    with open(f"{git_repo_path}/db/aws-test.lua", "w") as db_file:
+        tmp_db = {}
+        idx = 0
+        for player in cursor: 
+            if idx % 1000 == 0: 
+                print(f"Processed {idx} players")
+            transformed_data = transform_player_data(player)
 
-        if player["server"] not in tmp_db:
-            tmp_db[player["server"]] = {}
-        
-        tmp_db[player["server"]][player["name"]] = transformed_data
-    
-    str_lua = dump_lua(tmp_db)
-    str_base = "local addonName, ns = ... \nlocal db = "
-    db_file.write(str_base + str_lua + "\nns.db.char = db")
-    db_file.close()
+            if player["server"] not in tmp_db:
+                tmp_db[player["server"]] = {}
+            
+            tmp_db[player["server"]][player["name"]] = transformed_data
+            idx += 1
+
+        str_lua = dump_lua(tmp_db)
+        str_base = "local addonName, ns = ... \nlocal db = "
+        db_file.write(str_base + str_lua + "\nns.db.char = db")
 
 def commit():
     print(f"Commiting new db...")
     os.system(f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' && git push")
 
+def get_players_slice(db, offset, limit):
+    print(f"Retrieving all player from MongoDB")
+    cursor = db.players.find().skip(offset).limit(limit)
+    print(f"Cursor generated")
+    return cursor
+
 def lambda_handler(event, ctx):
     clone_git_repo()
     db = get_mongo_db()
-    players = get_all_players(db)
-    generate_db(players)
+    #tmp_db = {}
+
+    cursor = get_all_players_cursor(db)
+    #with ThreadPoolExecutor(max_workers=2) as executor:
+        #db_thread_a = executor.submit(load_players, get_players_slice(db, 0, 1000), tmp_db, 1)
+        #db_thread_b = executor.submit(load_players, get_players_slice(db, 1000, 2000), tmp_db, 2)
+        #db_thread_c = executor.submit(load_players, get_players_slice(db, 2000, 3000), tmp_db, 3)
+        #db_thread_d = executor.submit(load_players, get_players_slice(db, 3000, 4000), tmp_db, 4)
+        #db_thread_e = executor.submit(load_players, get_players_slice(db, 4000, 5000), tmp_db, 5)
+        
+    #db_thread_a.result()
+    #db_thread_b.result()
+    #db_thread_c.result()
+    #db_thread_d.result()
+    #db_thread_e.result()
+
+    #print(f"Total retrieved players {len(tmp_db)}")
+    generate_db(cursor)
     commit()
     return {
         'statusCode': 200
