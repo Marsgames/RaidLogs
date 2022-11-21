@@ -35,10 +35,10 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
             frame:AddLine(" ")
         end
         local role = bosses[db.BossId[raid][extBosses[raid][0]]][3]["metric"]
-        local TankIcon = IconClass("Interface\\LFGFRAME\\UI-LFG-ICON-PORTRAITROLES.blp", 64, 64, 0, 0 + 19, 22, 22 + 19) -- should not appear
-        local HealerIcon = IconClass("Interface\\LFGFRAME\\UI-LFG-ICON-PORTRAITROLES.blp", 64, 64, 19, 19 + 19, 1, 1 + 19)
-        local DPSIcon = IconClass("Interface\\LFGFRAME\\UI-LFG-ICON-PORTRAITROLES.blp", 64, 64, 19, 19 + 19, 22, 22 + 19)
-        frame:AddDoubleLine(raidName, ternary(role == "dps", DPSIcon:GetIconString(), ternary(role == "hps", HealerIcon:GetIconString(), TankIcon:GetIconString())))
+        local TankIcon = "|A:4259:19:19|a" -- Should not appear
+        local HealerIcon = "|A:4258:19:19|a"
+        local DPSIcon = "|A:4257:19:19|a"
+        frame:AddDoubleLine(raidName, ternary(role == "dps", DPSIcon, ternary(role == "hps", HealerIcon, TankIcon)))
 
         for i = 0, #extBosses[raid] do
             local bossName = extBosses[raid][i]
