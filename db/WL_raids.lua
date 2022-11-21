@@ -6,7 +6,8 @@ db = {}
 db.RaidName = {
     [26] = "Castle Nathria",
     [28] = "Sanctum of Domination",
-    [29] = "Sepulcher of the First Ones"
+    [29] = "Sepulcher of the First Ones",
+    [31] = "Vault of the Incarnates"
 }
 db.BossName = {
     [26] = {
@@ -45,6 +46,16 @@ db.BossName = {
         [2543] = "Lords of Dread",
         [2549] = "Rygelon",
         [2537] = "The Jailer"
+    },
+    [31] = {
+        [2587] = "Eranog",
+        [2639] = "Terros",
+        [2590] = "The Primalist Council",
+        [2592] = "Sennarth, The Cold Breath",
+        [2635] = "Dathea, Ascended",
+        [2605] = "Kurog Grimtotem",
+        [2614] = "Broodkeeper Diurna",
+        [2607] = "Raszageth the Storm-Eater"
     }
 }
 db.BossId = {
@@ -84,6 +95,16 @@ db.BossId = {
         ["Lords of Dread"] = 2543,
         ["Rygelon"] = 2549,
         ["The Jailer"] = 2537
+    },
+    [31] = {
+        ["Eranog"] = 2587,
+        ["Terros"] = 2639,
+        ["The Primalist Council"] = 2590,
+        ["Sennarth, The Cold Breath"] = 2592,
+        ["Dathea, Ascended"] = 2635,
+        ["Kurog Grimtotem"] = 2605,
+        ["Broodkeeper Diurna"] = 2614,
+        ["Raszageth the Storm-Eater"] = 2607
     }
 }
 
@@ -125,6 +146,18 @@ db["Extension"] = {
             [8] = "Lords of Dread",
             [9] = "Rygelon",
             [10] = "The Jailer"
+        }
+    },
+    ["Dragonflight"] = {
+        [31] = {
+            [0] = "Eranog",
+            [1] = "Terros",
+            [2] = "The Primalist Council",
+            [3] = "Sennarth, The Cold Breath",
+            [4] = "Dathea, Ascended",
+            [5] = "Kurog Grimtotem",
+            [6] = "Broodkeeper Diurna",
+            [7] = "Raszageth the Storm-Eater"
         }
     }
 }
