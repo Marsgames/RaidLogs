@@ -119,6 +119,7 @@ wcl_queries = {
         character(id: {}) {{  \
                     name, \
                     server {{ \
+                    region {{ compactName }} \
                     name \
                 }}, \
                 Shriekwing_N: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 3) \
@@ -160,6 +161,7 @@ wcl_queries = {
         character(id: {}) {{ \
                     name, \
                     server {{ \
+                      region {{ compactName }} \
                       name \
                     }}, \
                 The_Tarragrue_N: encounterRankings(byBracket: true, encounterID: 2423, compare: Parses, difficulty: 3) \
@@ -201,6 +203,7 @@ wcl_queries = {
         character(id: {}) {{ \
                     name, \
                     server {{ \
+                    region {{ compactName }} \
                     name \
                 }}, \
                 Vigilant_Guardian_N: encounterRankings(byBracket: true, encounterID: 2512, compare: Parses, difficulty: 3) \
@@ -275,6 +278,7 @@ class Player:
         self.id = id
         self.server = player_data.pop("server")["name"]
         self.raids = {}
+        self.region = player_data.pop("server")["region"]["compactName"]
 
         self.append_raids_data(player_data, rank) 
 

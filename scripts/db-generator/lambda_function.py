@@ -73,14 +73,21 @@ def transform_player_data(player):
     
     return tmp_player_data
 
+def transform_player_data_ugly(player):
+    tmp_player_data = []
+    for raid in player["raids"].values():
+        tmp_player_data.append(f"{raid['encounter']}:{raid['difficulty']}:{raid['rank']}:{raid['metric']}:{raid['bestPerformance']}:{raid['averagePerformance']}:{raid['totalKills']}")
+    
+    return tmp_player_data
+
 def generate_db(cursor):
-    with open(f"{git_repo_path}/db/aws-test.lua", "w") as db_file:
+    with open(f"{git_repo_path}/db/aws-test2.lua", "w") as db_file:
         tmp_db = {}
         idx = 0
         for player in cursor: 
             if idx % 1000 == 0: 
                 print(f"Processed {idx} players")
-            transformed_data = transform_player_data(player)
+            transformed_data = transform_player_data_ugly(player)
 
             if player["server"] not in tmp_db:
                 tmp_db[player["server"]] = {}
