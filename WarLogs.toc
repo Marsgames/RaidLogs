@@ -1,5 +1,5 @@
 ## Interface: 100002
-## Title: |cFF00FF00WarLogs|r
+## Title: WarLogs
 ## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
 ## Notes-enUS: Show you Warcraft Logs ranking in game 
 ## Author:  Marsgames & Tempaxe & Mío
@@ -13,9 +13,9 @@
 
 ## X-Category: Boss Encounters
 ## X-eMail: marsgamess@gmail.com
-## X-BugReport: https://github.com/Marsgames/
+## X-BugReport: https://github.com/Marsgames/WarLogs
 
-## SavedVariables: WLdb
+## SavedVariables: WarLogsDB
 
 # embeds.xml
 
@@ -34,8 +34,6 @@
 
 ########## DB ##########
 db\WL_raids.lua
-db\WL_EU.lua
-db\aws-test.lua
 
 ########## Addon ##########
 WarLogs.lua
