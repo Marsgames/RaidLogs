@@ -257,7 +257,7 @@ mongo_client = None
 lambda_client = boto3.client('lambda')
 lambda_function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
 scheduler_reviver_name = os.environ['SCHEDULER_REVIVER_NAME']
-scheduler_client = boto3.client('scheduler')
+scheduler_client = boto3.client('events')
 
 class Player:
     def __init__(self, player_data, id, rank):
@@ -281,11 +281,12 @@ class Player:
             }
 
     def load_data_from_json(self, player_data, id, rank):
+        srv = player_data.pop("server")
         self.name = player_data.pop("name")
         self.id = id
-        self.server = player_data.pop("server")["name"]
+        self.server = srv["name"]
         self.raids = {}
-        self.region = player_data.pop("server")["region"]["compactName"]
+        self.region = srv["region"]["compactName"]
 
         self.append_raids_data(player_data, rank) 
 
@@ -344,7 +345,7 @@ def upsert_players(players):
 
     requests = []
     for player in players.values():
-        set = { "name": player.name, "server": player.server }
+        set = { "name": player.name, "server": player.server, "region": player.region }
         for raid, v in player.raids.items():
             set[f"raids.{raid}"] = v 
         requests.append(
@@ -364,7 +365,7 @@ def get_remaining_wcl_points():
         'Content-Type': 'application/json'
     }
     response = requests.request("POST", wcl_api_url, headers=headers, data=wcl_api_limit_query)
-    
+
     if not response.ok and response.status_code == 429:
         return {"data": { "rateLimitData": { "limitPerHour": 72000, "pointsSpentThisHour": 72000, "pointsResetIn": 1800 }}}
 
@@ -381,17 +382,21 @@ def can_i_run(msg_count, concurrency_count, wcl_api_budget):
         return False
 
 def scheduler_reviver_run(resetIn):
-    response = scheduler_client.get_schedule(
-        Name=scheduler_reviver_name
-    )
-    print(response)
+    invokeDate = datetime.now() + timedelta(seconds=resetIn)
+    print(f"It is now @ {datetime.now()}")
+    print(f"Scheduling reviver @ {invokeDate.isoformat()}")
 
+    scheduler_client.put_rule(
+        Name=scheduler_reviver_name,
+        ScheduleExpression=f"cron({invokeDate.minute} {invokeDate.hour} {invokeDate.day} {invokeDate.month} ? {invokeDate.year})",
+        State="ENABLED"
+    )
 
 def decrease_lambda_concurrency(concurrency_count):
     lambda_client.put_function_concurrency(FunctionName=lambda_function_name, ReservedConcurrentExecutions=concurrency_count-1)
 
 def lambda_handler(event, ctx):
-    concurrency_count = lambda_client.get_function_concurrency(lambda_function_name)["ReservedConcurrentExecutions"]
+    concurrency_count = lambda_client.get_function_concurrency(FunctionName=lambda_function_name)["ReservedConcurrentExecutions"]
     api_budget = get_remaining_wcl_points()
 
     if can_i_run(len(event['Records']), concurrency_count, api_budget):

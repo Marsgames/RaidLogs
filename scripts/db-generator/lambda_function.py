@@ -77,7 +77,7 @@ def generate_db(cursor):
 
         str_lua = dump_lua(tmp_db)
         str_base = "local addonName, ns = ... \nlocal db = "
-        db_file.write(str_base + str_lua + "\nns.db.char = db")
+        db_file.write(str_base + str_lua + "\nWarLogsAddCharsToDB(db)")
 
 def commit():
     print(f"Commiting new db...")
