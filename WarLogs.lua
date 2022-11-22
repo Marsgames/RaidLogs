@@ -1,6 +1,14 @@
 local addonName, ns = ...
 
 local db = ns.db
+db.char = {}
+
+function WarLogsAddCharsToDB(charsTable)
+    -- append charsTable to db.char
+    for k, v in pairs(charsTable) do
+        db.char[k] = v
+    end
+end
 
 local colors = {
     ["grey"] = "|cff9d9d9d",
@@ -27,54 +35,86 @@ local function ternary(condition, ifTrue, ifFalse)
     end
 end
 
+local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
+    local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
+    local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
+    if (difficulty > maxDifficulty and datas["best"] > 0) then
+        maxDifficulty = difficulty
+        local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
+        lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
+        lineRight = scoreColor .. datas["best"] .. "%"
+    end
+    return lineLeft, lineRight, maxDifficulty
+end
+
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
-    local bosses = db.char[unitRealm][unitName][raid]
-    if (bosses) then
-        if (addLineBefore) then
-            frame:AddLine(" ")
+    local playerDatas = db.char[playerRealm][playerName]
+    local playerTable = {}
+    local metric = ""
+    -- data format = "bossId:bossDifficulty:rank:metric:best:average:killCount"
+    for _, v in pairs(playerDatas) do
+        local splitTable = {strsplit(":", v)}
+
+        local bossId = tonumber(splitTable[1])
+        local bossDifficulty = tonumber(splitTable[2])
+        local rank = tonumber(splitTable[3])
+        metric = splitTable[4]
+        local best = tonumber(splitTable[5])
+        local average = tonumber(splitTable[6])
+        local killCount = tonumber(splitTable[7])
+
+        if playerTable[bossId] == nil then
+            playerTable[bossId] = {}
         end
-        local role = bosses[db.BossId[raid][extBosses[raid][0]]][3]["metric"]
-        local TankIcon = "|A:4259:19:19|a" -- Should not appear
-        local HealerIcon = "|A:4258:19:19|a"
-        local DPSIcon = "|A:4257:19:19|a"
-        frame:AddDoubleLine(raidName, ternary(role == "dps", DPSIcon, ternary(role == "hps", HealerIcon, TankIcon)))
+        playerTable[bossId][bossDifficulty] = {
+            ["rank"] = rank,
+            ["metric"] = metric,
+            ["best"] = best,
+            ["average"] = average,
+            ["killCount"] = killCount
+        }
+    end
 
-        for i = 0, #extBosses[raid] do
-            local bossName = extBosses[raid][i]
-            local bossID = db.BossId[raid][bossName]
-            local difficulties = bosses[bossID]
-            local maxDifficulty = 0
-            local lineLeft = ""
-            local lineRight = ""
+    if (addLineBefore) then
+        frame:AddLine(" ")
+    end
 
-            -- If there is an error with line 55, expecting table got nil, uncomment bellow lines
-            -- print("---------- " .. bossName .. " ----------")
-            -- DevTools_Dump(difficulties)
+    local TankIcon = "|A:4259:19:19|a" -- Should not appear
+    local HealerIcon = "|A:4258:19:19|a"
+    local DPSIcon = "|A:4257:19:19|a"
+    frame:AddDoubleLine(raidName, ternary(metric == "dps", DPSIcon, ternary(metric == "hps", HealerIcon, TankIcon)))
 
-            if (difficulties) then
-                for difficulty, datas in pairs(difficulties) do
-                    local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
-                    local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
-                    if (difficulty > maxDifficulty and datas["best"] > 0) then
-                        maxDifficulty = difficulty
-                        local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
-                        lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
-                        lineRight = scoreColor .. datas["best"] .. "%"
-                    end
-                end
-            end
-            if lineLeft == "" then
-                frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
-            else
-                frame:AddDoubleLine(lineLeft, lineRight)
-            end
+    for i = 0, #extBosses[raid] do
+        local bossName = extBosses[raid][i]
+        local bossID = db.BossId[raid][bossName]
+        local difficulties = playerTable[bossID]
+        local maxDifficulty = 0
+        local lineLeft = ""
+        local lineRight = ""
+
+        -- If there is an error with line 55, expecting table got nil, uncomment bellow lines
+        -- print("---------- " .. bossName .. " ----------")
+        -- DevTools_Dump(difficulties)
+
+        if (difficulties) then
+            local datas = difficulties[3]
+            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 3, bossName)
+            datas = difficulties[4]
+            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 4, bossName)
+            datas = difficulties[5]
+            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 5, bossName)
+        end
+        if lineLeft == "" then
+            frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
+        else
+            frame:AddDoubleLine(lineLeft, lineRight)
         end
     end
 end
 
 local function InitAddon(unitName, unitRealm)
-    local frame = WarLogs or CreateFrame("GameTooltip", "WarLogs", PVEFrame, "GameTooltipTemplate")
+    local frame = WarLogsFrame or CreateFrame("GameTooltip", "WarLogsFrame", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
     if (not db.char[unitRealm] or not db.char[unitRealm][unitName]) then
