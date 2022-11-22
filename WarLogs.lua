@@ -52,23 +52,22 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local playerDatas = db.char[playerRealm][playerName]
     local playerTable = {}
     local metric = ""
-    -- data format = "bossId:bossDifficulty:rank:metric:best:average:killCount"
+    -- data format = "bossId:bossDifficulty:metric:best:average:killCount"
     for _, v in pairs(playerDatas) do
         local splitTable = {strsplit(":", v)}
 
         local bossId = tonumber(splitTable[1])
         local bossDifficulty = tonumber(splitTable[2])
-        local rank = tonumber(splitTable[3])
-        metric = splitTable[4]
-        local best = tonumber(splitTable[5])
-        local average = tonumber(splitTable[6])
-        local killCount = tonumber(splitTable[7])
+        -- local rank = tonumber(splitTable[3])
+        metric = splitTable[3]
+        local best = tonumber(splitTable[4])
+        local average = tonumber(splitTable[5])
+        local killCount = tonumber(splitTable[6])
 
         if playerTable[bossId] == nil then
             playerTable[bossId] = {}
         end
         playerTable[bossId][bossDifficulty] = {
-            ["rank"] = rank,
             ["metric"] = metric,
             ["best"] = best,
             ["average"] = average,

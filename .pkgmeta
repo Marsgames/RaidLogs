@@ -14,3 +14,6 @@ plain-copy:
 ignore:
  - README.md
  - scripts/
+ - .vscode
+ - .gitignore
+ - .github
