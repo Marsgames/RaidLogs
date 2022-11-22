@@ -1,0 +1,15 @@
+## Interface: 100002
+## Title: WarLogs Database |cff00ff00CHINA 
+## Author: Marsgames & Mantis
+## Dependencies: WarLogs
+## DefaultState: enabled
+## X-Type: Boss Encounters
+## X-Region: China
+## X-Faction: Both
+## X-Category: Boss Encounters
+## X-eMail: marsgamess@gmail.com
+## X-BugReport: https://github.com/Marsgames/WarLogs
+## X-Website: https://github.com/Marsgames/WarLogs
+
+########## DB ##########
+../WarLogs/db/WL_DB_CN.lua

@@ -1,7 +1,16 @@
 package-as: WarLogs @project-version@
+enable-nolib-creation: no
+
+move-folders:
+    WarLogs/db/WarLogs_DB_CN: WarLogs_DB_CN
+    WarLogs/db/WarLogs_DB_EU: WarLogs_DB_EU
+    WarLogs/db/WarLogs_DB_KR: WarLogs_DB_KR
+    WarLogs/db/WarLogs_DB_TW: WarLogs_DB_TW
+    WarLogs/db/WarLogs_DB_US: WarLogs_DB_US
+
+plain-copy:
+    - db/WL_*.lua
 
 ignore:
  - README.md
  - scripts/
-
-enable-nolib-creation: no
