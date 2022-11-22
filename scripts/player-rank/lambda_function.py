@@ -260,16 +260,15 @@ scheduler_reviver_name = os.environ['SCHEDULER_REVIVER_NAME']
 scheduler_client = boto3.client('events')
 
 class Player:
-    def __init__(self, player_data, id, rank):
-        self.load_data_from_json(player_data, id, rank)
+    def __init__(self, player_data, id):
+        self.load_data_from_json(player_data, id)
     
-    def append_raids_data(self, player_data, rank):
+    def append_raids_data(self, player_data):
         player_data.pop("name", None)
         player_data.pop("server", None)
 
         for key, bossData in player_data.items():
             self.raids[key] = {
-                "rank": rank,
                 "encounter": wcl_alias_to_encounter_mapping[key],
                 "tag": key,
                 "difficulty": bossData["difficulty"],
@@ -280,7 +279,7 @@ class Player:
                 "totalKills": bossData["totalKills"]
             }
 
-    def load_data_from_json(self, player_data, id, rank):
+    def load_data_from_json(self, player_data, id):
         srv = player_data.pop("server")
         self.name = player_data.pop("name")
         self.id = id
@@ -288,7 +287,7 @@ class Player:
         self.raids = {}
         self.region = srv["region"]["compactName"]
 
-        self.append_raids_data(player_data, rank) 
+        self.append_raids_data(player_data) 
 
 def connect_mongo():
     global mongo_client
@@ -315,29 +314,30 @@ def get_auth_token():
     response = requests.request("POST", wcl_token_url, headers=wcl_token_headers, data=wcl_token_payload)
     return response.json()["access_token"]
 
-def get_players_stats_for_player(playerRankMsg, players):
+def get_players_stats_for_player(playerMsg, players):
     global auth_token
-    playerId = playerRankMsg["id"]
+    playerId = playerMsg.keys()[0]
+    raidId = playerMsg.values()[0]
     if datetime.now() - timedelta(hours=1) > last_auth:
         auth_token = get_auth_token()
     headers = {
         'Authorization': f'Bearer {auth_token}',
         'Content-Type': 'application/json'
     }
-    for raidId, rank in playerRankMsg["raidsRank"].items():
-        query = wcl_queries[int(raidId)]
 
-        response = requests.request("POST", wcl_api_url, headers=headers, data=query.format(playerId))
+    query = wcl_queries[int(raidId)]
+    response = requests.request("POST", wcl_api_url, headers=headers, data=query.format(playerId))
 
-        if not response.ok:
-            raise Exception(f"Bad reponse from WCL (code {response.status_code}), probably limit reached") 
+    if not response.ok:
+        raise Exception(f"Bad reponse from WCL (code {response.status_code}), probably limit reached") 
 
-        player_data = response.json()["data"]["characterData"]["character"]
-        
-        if playerId in players:
-            players[playerId].append_raids_data(player_data, rank)
-        else:
-            players[playerId] = Player(player_data, playerId, rank)
+    player_data = response.json()["data"]["characterData"]["character"]
+    
+    if playerId in players:
+        players[playerId].append_raids_data(player_data)
+    else:
+        players[playerId] = Player(player_data, playerId)
+
     return players
 
 def upsert_players(players):
@@ -382,7 +382,7 @@ def can_i_run(msg_count, concurrency_count, wcl_api_budget):
         return False
 
 def scheduler_reviver_run(resetIn):
-    invokeDate = datetime.now() + timedelta(seconds=resetIn)
+    invokeDate = datetime.now() + timedelta(seconds=resetIn+30)
     print(f"It is now @ {datetime.now()}")
     print(f"Scheduling reviver @ {invokeDate.isoformat()}")
 
@@ -409,8 +409,8 @@ def lambda_handler(event, ctx):
         players = {}
 
         for record in event['Records']:
-            playerRankMsg = json.loads(record["body"])
-            players = get_players_stats_for_player(playerRankMsg, players)
+            playerMsg = json.loads(record["body"])
+            players = get_players_stats_for_player(playerMsg, players)
             sqs.delete_message(
                 QueueUrl=sqs_reports_queue,
                 ReceiptHandle=record["receiptHandle"]
