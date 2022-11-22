@@ -316,8 +316,10 @@ def get_auth_token():
 
 def get_players_stats_for_player(playerMsg, players):
     global auth_token
-    playerId = playerMsg.keys()[0]
-    raidId = playerMsg.values()[0]
+
+    playerId = list(playerMsg.keys())[0]
+    raidId = list(playerMsg.values())[0]
+
     if datetime.now() - timedelta(hours=1) > last_auth:
         auth_token = get_auth_token()
     headers = {
@@ -407,16 +409,19 @@ def lambda_handler(event, ctx):
         print(f"Starting with {len(event['Records'])} new messages")
 
         players = {}
-
+        messages_to_delete = []
         for record in event['Records']:
             playerMsg = json.loads(record["body"])
             players = get_players_stats_for_player(playerMsg, players)
-            sqs.delete_message(
-                QueueUrl=sqs_reports_queue,
-                ReceiptHandle=record["receiptHandle"]
-            )
+            messages_to_delete.append(record["receiptHandle"])
+
         
         upsert_players(players)
+        for handle in messages_to_delete:
+            sqs.delete_message(
+                QueueUrl=sqs_reports_queue,
+                ReceiptHandle=handle
+            )
 
         return {
             'statusCode': 200

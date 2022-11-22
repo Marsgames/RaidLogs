@@ -4,6 +4,7 @@ from pymongo import MongoClient
 
 git_repo_url = "https://{0}@github.com/Marsgames/WarLogs.git"
 git_repo_path = "/tmp/WarLogs"
+wow_regions = ["EU", "CN", "KR", "TW", "US"]
 
 def get_mongo_db():
     MONGO_USER = os.environ['MONGO_USER']
@@ -21,9 +22,9 @@ def get_mongo_db():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
-def get_all_players_cursor(db):
-    print(f"Retrieving all player from MongoDB")
-    cursor = db.players.find(batch_size=1000)
+def get_players_per_region(db, region):
+    print(f"Retrieving all {region} player from MongoDB")
+    cursor = db.players.find({"region": region}, batch_size=1000)
     print(f"Cursor generated")
     return cursor
 
@@ -56,17 +57,17 @@ def dump_lua(data):
 def transform_player_data_ugly(player):
     tmp_player_data = []
     for raid in player["raids"].values():
-        tmp_player_data.append(f"{raid['encounter']}:{raid['difficulty']}:{raid['rank']}:{raid['metric']}:{raid['bestPerformance']}:{raid['averagePerformance']}:{raid['totalKills']}")
+        tmp_player_data.append(f"{raid['encounter']}:{raid['difficulty']}:{raid['metric']}:{raid['bestPerformance']}:{raid['averagePerformance']}:{raid['totalKills']}")
     
     return tmp_player_data
 
-def generate_db(cursor):
-    with open(f"{git_repo_path}/db/aws-test2.lua", "w") as db_file:
+def generate_db(cursor, region):
+    with open(f"{git_repo_path}/db/WL_DB_{region}.lua", "w") as db_file:
         tmp_db = {}
         idx = 0
         for player in cursor: 
             if idx % 1000 == 0: 
-                print(f"Processed {idx} players")
+                print(f"{region} - Processed {idx} players")
             transformed_data = transform_player_data_ugly(player)
 
             if player["server"] not in tmp_db:
@@ -86,24 +87,10 @@ def commit():
 def lambda_handler(event, ctx):
     clone_git_repo()
     db = get_mongo_db()
-    #tmp_db = {}
+    for region in wow_regions:
+        cursor = get_players_per_region(db, region)
+        generate_db(cursor, region)
 
-    cursor = get_all_players_cursor(db)
-    #with ThreadPoolExecutor(max_workers=2) as executor:
-        #db_thread_a = executor.submit(load_players, get_players_slice(db, 0, 1000), tmp_db, 1)
-        #db_thread_b = executor.submit(load_players, get_players_slice(db, 1000, 2000), tmp_db, 2)
-        #db_thread_c = executor.submit(load_players, get_players_slice(db, 2000, 3000), tmp_db, 3)
-        #db_thread_d = executor.submit(load_players, get_players_slice(db, 3000, 4000), tmp_db, 4)
-        #db_thread_e = executor.submit(load_players, get_players_slice(db, 4000, 5000), tmp_db, 5)
-        
-    #db_thread_a.result()
-    #db_thread_b.result()
-    #db_thread_c.result()
-    #db_thread_d.result()
-    #db_thread_e.result()
-
-    #print(f"Total retrieved players {len(tmp_db)}")
-    generate_db(cursor)
     commit()
     return {
         'statusCode': 200
