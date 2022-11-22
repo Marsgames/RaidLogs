@@ -53,26 +53,6 @@ def dump_lua(data):
         t += "}"
         return t
 
-def transform_player_data(player):
-    tmp_player_data = {}
-
-    for raid in player["raids"].values():
-        if raid["zone"] not in tmp_player_data:
-            tmp_player_data[raid["zone"]] = {}
-        
-        if raid["encounter"] not in tmp_player_data[raid["zone"]]:
-            tmp_player_data[raid["zone"]][raid["encounter"]] = {}
-        
-        tmp_player_data[raid["zone"]][raid["encounter"]][raid["difficulty"]] = {
-            "rank": raid["rank"],
-            "metric": raid["metric"],
-            "best": raid["bestPerformance"],
-            "avg": raid["averagePerformance"],
-            "count": raid["totalKills"]
-        }
-    
-    return tmp_player_data
-
 def transform_player_data_ugly(player):
     tmp_player_data = []
     for raid in player["raids"].values():
@@ -102,12 +82,6 @@ def generate_db(cursor):
 def commit():
     print(f"Commiting new db...")
     os.system(f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' && git push")
-
-def get_players_slice(db, offset, limit):
-    print(f"Retrieving all player from MongoDB")
-    cursor = db.players.find().skip(offset).limit(limit)
-    print(f"Cursor generated")
-    return cursor
 
 def lambda_handler(event, ctx):
     clone_git_repo()
