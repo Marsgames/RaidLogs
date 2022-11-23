@@ -3,6 +3,8 @@ local addonName, ns = ...
 local db = ns.db
 db.char = {}
 
+-- Create public function to populate the db (called from db/WarLogs_DB_XX.lua, but as these files are
+--      enabled with "another addon" they do not have the same namespace as this file)
 function WarLogsAddCharsToDB(charsTable)
     -- append charsTable to db.char
     for k, v in pairs(charsTable) do
@@ -10,6 +12,8 @@ function WarLogsAddCharsToDB(charsTable)
     end
 end
 
+-- Colors used in the addon (principally for the rank percentages)
+-- Maybe we should use a ToolBox namespace for this?
 local colors = {
     ["grey"] = "|cff9d9d9d",
     ["gray"] = "|cff9d9d9d",
@@ -23,10 +27,14 @@ local colors = {
     ["yellow"] = "|cffffff00"
 }
 
+-- Load bosses data for current expansion + get player name and realm
 local extBosses = db["Extension"]["Shadowlands"]
 local playerName = GetUnitName("player")
 local playerRealm = GetRealmName()
 
+-- Ternary function to reduce the number of lines in the code
+-- Maybe who should use something like a quarternary function to reduce the number of lines even more?
+-- Maybe we should use a ToolBox namespace for this?
 local function ternary(condition, ifTrue, ifFalse)
     if condition then
         return ifTrue
@@ -34,10 +42,15 @@ local function ternary(condition, ifTrue, ifFalse)
         return ifFalse
     end
 end
+-- TODO: Create something that looks like a switch/case statement
 
+-- Givent a data set, return a tooltip double line formatted string
 local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
+    -- Get color for the rank percentage and difficulty "name"
     local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
     local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
+
+    -- If there is a rank for this difficulty, and the difficulty is higher than the previous tested ones, add a line to the tooltip
     if (difficulty > maxDifficulty and datas["best"] > 0) then
         maxDifficulty = difficulty
         local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
@@ -159,7 +172,8 @@ local function InitAddon(unitName, unitRealm)
     return frame
 end
 
-local pveFrameIsShown = false
+local pveFrameIsShown = false -- Check weather the PVEFrame is shown or not
+-- When opening the PVEFrame, show the tooltip for the player
 PVEFrame:HookScript(
     "OnShow",
     function()
@@ -168,21 +182,25 @@ PVEFrame:HookScript(
         pveFrameIsShown = true
     end
 )
+-- We should hide the tooltip when the PVEFrame is closed
 PVEFrame:HookScript(
     "OnHide",
     function()
-        -- local tt = InitAddon(playerName, playerRealm)
-        -- tt:Hide()
+        local tt = InitAddon(playerName, playerRealm)
+        tt:Hide()
         pveFrameIsShown = false
     end
 )
 
+-- Everytime a GameTooltip is shown, we check if it's a player tooltip
+-- If it's a player tooltip, we extract player name and realm
+-- Then, we check if the player is in a LFG group (that would mean that this tooltip is for a player applying to a group)
+-- If he is, we check try to show the tooltip for the applying member
 GameTooltip:HookScript(
     "OnShow",
     function()
         -- TODO: Issue if the realm is the same as the current player
         local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
-        -- Name contains space
         if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
             local containsSpace = name:find(" ")
             if (not containsSpace) then
@@ -208,54 +226,43 @@ GameTooltip:HookScript(
         local tt = InitAddon(playerName, playerRealm)
         if (pveFrameIsShown) then
             tt:Show()
-        end
-    end
-)
-
-local function OnModifierStateChange(self, event, key, status)
-    if (key == "LALT") then
-        local tt = InitAddon(playerName, playerRealm)
-        if (pveFrameIsShown) then
-            tt:Show()
         else
             tt:Hide()
         end
     end
+)
+
+-- Update the tooltip if the player use LALT modifier
+-- It's a big fat ugly copy/paste of the GameTooltip:HookScript("OnShow", function() ... end)
+-- Maybe we should factorize this a bit
+local function OnModifierStateChange(self, event, key, status)
+    if (key == "LALT") then
+        -- TODO: Issue if the realm is the same as the current player
+        local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
+        if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
+            local containsSpace = name:find(" ")
+            if (not containsSpace) then
+                local id = C_LFGList.GetActiveEntryInfo().activityID
+                local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
+                local tt = InitAddon(name, realm)
+                if (not IsAddOnLoaded("RaiderIO")) then
+                    tt:ClearAllPoints()
+                    tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
+                end
+                if (name and realm) then
+                    tt:Show()
+                else
+                    tt:Hide()
+                end
+            end
+        else
+            local tt = InitAddon(playerName, playerRealm)
+            tt:Hide()
+        end
+    end
 end
+
+-- Register event to check if the player use LALT modifier
 local f = CreateFrame("Frame")
 f:RegisterEvent("MODIFIER_STATE_CHANGED")
 f:SetScript("OnEvent", OnModifierStateChange)
-
--- local hooked = {}
-
--- local function OnEnterHook(self)
---     print("On a quelque chose, c'est déjà ça")
---     if not self.tooltip then
---         -- The original OnEnter script doesn't show a tooltip in this case,
---         -- so we should exit here, instead of adding text to a tooltip that
---         -- isn't shown or, worse, is currently shown by something else.
---         return
---     end
-
---     print("hop hop add line tooltip")
---     GameTooltip:AddLine("hello world")
---     GameTooltip:Show()
--- end
-
--- hooksecurefunc(
---     "LFGListApplicationViewer_UpdateResults",
---     function(self)
---         for k, v in pairs(self) do
---             print(k, v)
---         end
---         -- DevTools_Dump(self.scrollBox)
---         -- local buttons = self.ScrollFrame.buttons
---         -- for i = 1, #buttons do
---         --     local button = buttons[i]
---         --     if not hooked[button] then
---         --         button:HookScript("OnEnter", OnEnterHook)
---         --         hooked[button] = true
---         --     end
---         -- end
---     end
--- )
