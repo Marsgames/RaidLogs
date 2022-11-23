@@ -7,17 +7,40 @@ import os
 
 #The number of point used per request to WCL, approximative, this is used to stop a bit before the limit by multiplying with the number of message to process
 api_call_budget = int(os.environ['WCL_CALL_BUDGET'])
-
-last_auth = datetime.now() - timedelta(hours=2)
-auth_token = ""
 wcl_token_url = "https://www.warcraftlogs.com/oauth/token"
 wcl_token_payload={'grant_type': 'client_credentials'}
 sqs_reports_queue = "https://sqs.us-east-1.amazonaws.com/697133125351/wcl-discovered-players"
 sqs = boto3.client('sqs')
+
 #Bad, should use lambda var but flemme
-wcl_token_headers = {
-  'Authorization': 'Basic OTdiOWVmODMtOTgwZi00ZTc0LTk1NDktZjNjN2E0MTk0NmU1OlJNem9jeHJOS2RhSmZpSkd2OXZjYVU2WkcwZjNTNjJCcE1rOE9Ueko='
+wcl_api_keys = {
+    "marsgames" : {
+        "key": "OTdiOWVmODMtOTgwZi00ZTc0LTk1NDktZjNjN2E0MTk0NmU1OlJNem9jeHJOS2RhSmZpSkd2OXZjYVU2WkcwZjNTNjJCcE1rOE9Ueko=",
+        "last_auth": datetime.now() - timedelta(hours=2),
+        "token": None
+    },
+    "wltemp1" : {
+        "key": "OTdkMDlmZWYtOTViNC00ZjBkLTlkOTUtYzQ4NWUxNDg0NjNlOlQzSzlIRWJzYkJWcHVsbDNVdFA0ak9HWFhQZ1dOTWh6ckpPY0NvNmE=",
+        "last_auth": datetime.now() - timedelta(hours=2),
+        "token": None
+    },
+    "wltemp2" : {
+        "key": "OTdkMGEzZDEtNDVlZC00MGY3LWI4YWUtYmM4NGM2MDc4ZmNmOlRMWEswYmdiUlhCUWFQYVhYUkIxZVFOSkJjT2hmbUFQVk9JdlJkaHc=",
+        "last_auth": datetime.now() - timedelta(hours=2),
+        "token": None
+    },
+    "wltemp3" : {
+        "key": "OTdkMGE1ZjMtMWM1YS00ZjQ0LTkwMGMtMDVhOGU2YjI1YWE1OnRZV05yd2cwdEpWb0xUQXZmVUI1Y0paN3hWT0tIYmlRY0JuS1B5S2g=",
+        "last_auth": datetime.now() - timedelta(hours=2),
+        "token": None
+    },
+    "wltemp4" : {
+        "key": "OTdkMGE5N2MtZjA3ZS00YzNlLTlhNDYtNzllZTU2NGIzOGI4OkJzanlmdEExWlJwWEI3aTdUYlpkVllhR0dlcll1dExGZ3JZRVllWEk=",
+        "last_auth": datetime.now() - timedelta(hours=2),
+        "token": None
+    }
 }
+
 wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
 wcl_alias_to_encounter_mapping = {
     "Shriekwing_N" : 2398,
@@ -306,24 +329,32 @@ def connect_mongo():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
-def get_auth_token():
-    global last_auth
-    last_auth = datetime.now()
+def get_auth_token(apiKeyName):
+    global wcl_api_keys
 
-    print(f"Auth expired, renewing")
-    response = requests.request("POST", wcl_token_url, headers=wcl_token_headers, data=wcl_token_payload)
-    return response.json()["access_token"]
+    #Auth token is less than one hour old
+    if datetime.now() - timedelta(hours=1) <= wcl_api_keys[apiKeyName]["last_auth"]:
+        return wcl_api_keys[apiKeyName]["token"]
 
-def get_players_stats_for_player(playerMsg, players):
-    global auth_token
+    #Token never generated on this container / more than an hour old
+    print(f"Renewing auth token for {apiKeyName}")
 
+    headers = {
+        "Authorization" : f"Basic {wcl_api_keys[apiKeyName]['key']}"
+    }
+    
+    response = requests.request("POST", wcl_token_url, headers=headers, data=wcl_token_payload)
+    wcl_api_keys[apiKeyName]["last_auth"] = datetime.now()
+    wcl_api_keys[apiKeyName]["token"] = response.json()["access_token"]
+
+    return wcl_api_keys[apiKeyName]["token"]
+
+def get_players_stats_for_player(playerMsg, apiKeyName, players):
     playerId = list(playerMsg.keys())[0]
     raidId = list(playerMsg.values())[0]
 
-    if datetime.now() - timedelta(hours=1) > last_auth:
-        auth_token = get_auth_token()
     headers = {
-        'Authorization': f'Bearer {auth_token}',
+        'Authorization': f'Bearer {get_auth_token(apiKeyName)}',
         'Content-Type': 'application/json'
     }
 
@@ -357,28 +388,27 @@ def upsert_players(players):
     res = mongo_client.players.bulk_write(requests, ordered=False)
     print(res.bulk_api_result)
 
-def get_remaining_wcl_points():
-    global auth_token
-    if datetime.now() - timedelta(hours=1) > last_auth:
-        auth_token = get_auth_token()
-    
+def get_remaining_wcl_points(apiKeyName):    
     headers = {
-        'Authorization': f'Bearer {auth_token}',
+        'Authorization': f'Bearer {get_auth_token(apiKeyName)}',
         'Content-Type': 'application/json'
     }
     response = requests.request("POST", wcl_api_url, headers=headers, data=wcl_api_limit_query)
+    data = response.json()
+    result = { "remaining" : 0, "resetIn": 1800}
 
-    if not response.ok and response.status_code == 429:
-        return {"data": { "rateLimitData": { "limitPerHour": 72000, "pointsSpentThisHour": 72000, "pointsResetIn": 1800 }}}
+    if response.ok:
+        result["remaining"] = data["data"]["rateLimitData"]["limitPerHour"] - data["data"]["rateLimitData"]["pointsSpentThisHour"]
+        result["resetIn"] = data['data']['rateLimitData']['pointsResetIn']
 
-    return response.json()
+    print(f"API Key : {apiKeyName} Budget : {result}")
+    return result
 
-def can_i_run(msg_count, concurrency_count, wcl_api_budget):
-    remaining_wcl_api_points = wcl_api_budget["data"]["rateLimitData"]["limitPerHour"] - wcl_api_budget["data"]["rateLimitData"]["pointsSpentThisHour"]
-    print(f"Budget - MSG Count : {msg_count} - Current Concurrency : {concurrency_count} - API Call Budget : {api_call_budget} - Remaining Points : {remaining_wcl_api_points}")
+def can_i_run(msg_count, concurrency_count, wcl_remaining_points):
+    print(f"Budget - MSG Count : {msg_count} - Current Concurrency : {concurrency_count} - API Call Budget : {api_call_budget} - Remaining Points : {wcl_remaining_points}")
 
     #At any time we can assume that the function can run completely if API Limit > Lambda Instance Concurrency * api_call_budget * nb_msg
-    if remaining_wcl_api_points > concurrency_count * api_call_budget * msg_count:
+    if wcl_remaining_points > concurrency_count * api_call_budget * msg_count:
         return True
     else:
         return False
@@ -399,36 +429,44 @@ def decrease_lambda_concurrency(concurrency_count):
 
 def lambda_handler(event, ctx):
     concurrency_count = lambda_client.get_function_concurrency(FunctionName=lambda_function_name)["ReservedConcurrentExecutions"]
-    api_budget = get_remaining_wcl_points()
 
-    if can_i_run(len(event['Records']), concurrency_count, api_budget):
-        print("Enough budget to handle all the calls, proceeding with players...")
-        if mongo_client == None:
-            connect_mongo()
-
-        print(f"Starting with {len(event['Records'])} new messages")
-
-        players = {}
-        messages_to_delete = []
-        for record in event['Records']:
-            playerMsg = json.loads(record["body"])
-            players = get_players_stats_for_player(playerMsg, players)
-            messages_to_delete.append(record["receiptHandle"])
-
+    minResetIn = 3600
+    for keyName in wcl_api_keys.keys():
+        api_budget = get_remaining_wcl_points(keyName)
         
-        upsert_players(players)
-        for handle in messages_to_delete:
-            sqs.delete_message(
-                QueueUrl=sqs_reports_queue,
-                ReceiptHandle=handle
-            )
+        if can_i_run(len(event['Records']), concurrency_count, api_budget["remaining"]):
+            print("Enough budget to handle all the calls, proceeding with players...")
+            if mongo_client == None:
+                connect_mongo()
 
-        return {
-            'statusCode': 200
-        }
-    else:
-        print("Not enough budget to handle all the calls decreasing concurrency...")
-        decrease_lambda_concurrency(concurrency_count)
-        if concurrency_count == 1:
-            print(f"Lambda has been disabled, scheduling the reviver func to run in {api_budget['data']['rateLimitData']['pointsResetIn']} seconds")
-            scheduler_reviver_run(api_budget["data"]["rateLimitData"]["pointsResetIn"])
+            print(f"Starting with {len(event['Records'])} new messages")
+
+            players = {}
+
+            for record in event['Records']:
+                playerMsg = json.loads(record["body"])
+                players = get_players_stats_for_player(playerMsg, keyName, players)
+                #sqs.delete_message(
+                #    QueueUrl=sqs_reports_queue,
+                #    ReceiptHandle=record["receiptHandle"]
+                #)
+            
+            upsert_players(players)
+
+            return {
+                'statusCode': 200
+            }
+        else:
+            print(f"Key {keyName} is exhausted")
+            if api_budget["resetIn"] < minResetIn:
+                minResetIn = api_budget["resetIn"]
+
+    
+    print("Not enough budget to handle all the calls decreasing concurrency...")
+    decrease_lambda_concurrency(concurrency_count)
+
+    if concurrency_count == 1:
+        print(f"Lambda has been disabled, scheduling the reviver func to run in at least {minResetIn} seconds")
+        scheduler_reviver_run(minResetIn)
+    
+    raise Exception("Throw to not delete sqs messages")
