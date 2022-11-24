@@ -12,4 +12,4 @@
 ## X-Website: https://github.com/Marsgames/WarLogs
 
 ########## DB ##########
-../WarLogs/db/WL_DB_EU.lua
+../WarLogs/db/WL_DB_TW.lua

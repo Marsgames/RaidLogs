@@ -1,14 +1,14 @@
 local addonName, ns = ...
 
 local db = ns.db
-db.char = {}
+local charData = {}
 
 -- Create public function to populate the db (called from db/WarLogs_DB_XX.lua, but as these files are
 --      enabled with "another addon" they do not have the same namespace as this file)
 function WarLogsAddCharsToDB(charsTable)
     -- append charsTable to db.char
     for k, v in pairs(charsTable) do
-        db.char[k] = v
+        charData[k] = v
     end
 end
 
@@ -62,20 +62,32 @@ end
 
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
-    local playerDatas = db.char[playerRealm][playerName]
+    local playerDatas = charData[playerRealm][playerName]
     local playerTable = {}
     local metric = ""
-    -- data format = "bossId:bossDifficulty:metric:best:average:killCount"
-    for _, v in pairs(playerDatas) do
-        local splitTable = {strsplit(":", v)}
+    -- data format = "bossId:bossDifficulty:metric:best:average:killCount/boss2ID:..."
+
+    -- new data format = "encDatas:best:average:killCount/enc2Datas:..."
+
+    local raids = { strsplit("/", playerDatas) }
+
+    for _, boss in pairs(raids) do
+        local splitTable = {strsplit(":", boss)}
 
         local bossId = tonumber(splitTable[1])
         local bossDifficulty = tonumber(splitTable[2])
-        -- local rank = tonumber(splitTable[3])
         metric = splitTable[3]
         local best = tonumber(splitTable[4])
         local average = tonumber(splitTable[5])
         local killCount = tonumber(splitTable[6])
+
+        -- local encounterType = tonumber(splitTable[1])
+        -- local best = tonumber(splitTable[2])
+        -- local average = tonumber(splitTable[3])
+        -- local killCount = tonumber(splitTable[4])
+        -- local bossId = 
+        -- local bossDifficulty = 
+        -- local metric =
 
         if playerTable[bossId] == nil then
             playerTable[bossId] = {}
@@ -92,10 +104,10 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         frame:AddLine(" ")
     end
 
-    local TankIcon = "|A:4259:19:19|a" -- Should not appear
+    --local TankIcon = "|A:4259:19:19|a" -- Should not appear
     local HealerIcon = "|A:4258:19:19|a"
     local DPSIcon = "|A:4257:19:19|a"
-    frame:AddDoubleLine(raidName, ternary(metric == "dps", DPSIcon, ternary(metric == "hps", HealerIcon, TankIcon)))
+    frame:AddDoubleLine(raidName, ternary(metric == "dps", DPSIcon, HealerIcon)-- ternary(metric == "hps", HealerIcon, TankIcon)))
 
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
@@ -111,11 +123,17 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
 
         if (difficulties) then
             local datas = difficulties[3]
-            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 3, bossName)
+            if (datas) then
+                lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 3, bossName)
+            end
             datas = difficulties[4]
+            if (datas) then
             lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 4, bossName)
+            end
             datas = difficulties[5]
+            if (datas) then
             lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 5, bossName)
+            end
         end
         if lineLeft == "" then
             frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
@@ -129,7 +147,7 @@ local function InitAddon(unitName, unitRealm)
     local frame = WarLogsFrame or CreateFrame("GameTooltip", "WarLogsFrame", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
-    if (not db.char[unitRealm] or not db.char[unitRealm][unitName]) then
+    if (not charData[unitRealm] or not charData[unitRealm][unitName]) then
         return frame
     end
 
