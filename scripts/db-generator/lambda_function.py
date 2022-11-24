@@ -96,7 +96,7 @@ def generate_reverse_mapping():
         
         print(f"Saving reverse mapping...")
         print(gnippam)
-        db_file.write(f"local gnippam = {dump_lua(gnippam)}")
+        db_file.write(f"local _, ns = ...\nlocal gnippam = {dump_lua(gnippam)}\nns.gnippam = gnippam")
 
 def commit():
     print(f"Commiting new db...")
