@@ -1,14 +1,14 @@
 local addonName, ns = ...
 
 local db = ns.db
-db.char = {}
+local charData = {}
 
 -- Create public function to populate the db (called from db/WarLogs_DB_XX.lua, but as these files are
 --      enabled with "another addon" they do not have the same namespace as this file)
 function WarLogsAddCharsToDB(charsTable)
     -- append charsTable to db.char
     for k, v in pairs(charsTable) do
-        db.char[k] = v
+        charData[k] = v
     end
 end
 
@@ -29,6 +29,7 @@ local colors = {
 
 -- Load bosses data for current expansion + get player name and realm
 local extBosses = db["Extension"]["Shadowlands"]
+local convTable = ns.gnippam
 local playerName = GetUnitName("player")
 local playerRealm = GetRealmName()
 
@@ -62,20 +63,23 @@ end
 
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
-    local playerDatas = db.char[playerRealm][playerName]
+    local playerDatas = charData[unitRealm][unitName]
     local playerTable = {}
     local metric = ""
-    -- data format = "bossId:bossDifficulty:metric:best:average:killCount"
-    for _, v in pairs(playerDatas) do
-        local splitTable = {strsplit(":", v)}
 
-        local bossId = tonumber(splitTable[1])
-        local bossDifficulty = tonumber(splitTable[2])
-        -- local rank = tonumber(splitTable[3])
-        metric = splitTable[3]
-        local best = tonumber(splitTable[4])
-        local average = tonumber(splitTable[5])
-        local killCount = tonumber(splitTable[6])
+    -- new data format = "encounterType:best:average:killCount/encounterType2:..."
+    local raids = { strsplit("/", playerDatas) }
+
+    for _, boss in pairs(raids) do
+        local splitTable = {strsplit(":", boss)}
+
+        local encounterType = tonumber(splitTable[1])
+        local best = tonumber(splitTable[2])
+        local average = tonumber(splitTable[3])
+        local killCount = tonumber(splitTable[4])
+        local bossId = convTable[encounterType]["encounter"]
+        local bossDifficulty = convTable[encounterType]["difficulty"]
+        local metric = convTable[encounterType]["metric"]
 
         if playerTable[bossId] == nil then
             playerTable[bossId] = {}
@@ -92,10 +96,10 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         frame:AddLine(" ")
     end
 
-    local TankIcon = "|A:4259:19:19|a" -- Should not appear
+    --local TankIcon = "|A:4259:19:19|a" -- Should not appear
     local HealerIcon = "|A:4258:19:19|a"
     local DPSIcon = "|A:4257:19:19|a"
-    frame:AddDoubleLine(raidName, ternary(metric == "dps", DPSIcon, ternary(metric == "hps", HealerIcon, TankIcon)))
+    frame:AddDoubleLine(raidName, ternary(metric == "dps", DPSIcon, ternary(metric == "hps", HealerIcon, "")))
 
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
@@ -111,11 +115,17 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
 
         if (difficulties) then
             local datas = difficulties[3]
-            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 3, bossName)
+            if (datas) then
+                lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 3, bossName)
+            end
             datas = difficulties[4]
+            if (datas) then
             lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 4, bossName)
+            end
             datas = difficulties[5]
+            if (datas) then
             lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 5, bossName)
+            end
         end
         if lineLeft == "" then
             frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
@@ -129,7 +139,7 @@ local function InitAddon(unitName, unitRealm)
     local frame = WarLogsFrame or CreateFrame("GameTooltip", "WarLogsFrame", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
-    if (not db.char[unitRealm] or not db.char[unitRealm][unitName]) then
+    if (not charData[unitRealm] or not charData[unitRealm][unitName]) then
         return frame
     end
 
@@ -207,10 +217,6 @@ GameTooltip:HookScript(
                 local id = C_LFGList.GetActiveEntryInfo().activityID
                 local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
                 local tt = InitAddon(name, realm)
-                if (not IsAddOnLoaded("RaiderIO")) then
-                    tt:ClearAllPoints()
-                    tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
-                end
                 if (name and realm) then
                     tt:Show()
                 else
@@ -238,26 +244,24 @@ GameTooltip:HookScript(
 local function OnModifierStateChange(self, event, key, status)
     if (key == "LALT") then
         -- TODO: Issue if the realm is the same as the current player
-        local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
-        if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
-            local containsSpace = name:find(" ")
-            if (not containsSpace) then
-                local id = C_LFGList.GetActiveEntryInfo().activityID
-                local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
-                local tt = InitAddon(name, realm)
-                if (not IsAddOnLoaded("RaiderIO")) then
-                    tt:ClearAllPoints()
-                    tt:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 0, 0)
+        if (_G["GameTooltipTextLeft1"]) then
+            local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
+            if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
+                local containsSpace = name:find(" ")
+                if (not containsSpace) then
+                    local id = C_LFGList.GetActiveEntryInfo().activityID
+                    local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
+                    local tt = InitAddon(name, realm)
+                    if (name and realm) then
+                        tt:Show()
+                    else
+                        tt:Hide()
+                    end
                 end
-                if (name and realm) then
-                    tt:Show()
-                else
-                    tt:Hide()
-                end
+            else
+                local tt = InitAddon(playerName, playerRealm)
+                tt:Hide()
             end
-        else
-            local tt = InitAddon(playerName, playerRealm)
-            tt:Hide()
         end
     end
 end
