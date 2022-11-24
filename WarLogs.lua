@@ -79,7 +79,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         local killCount = tonumber(splitTable[4])
         local bossId = convTable[encounterType]["encounter"]
         local bossDifficulty = convTable[encounterType]["difficulty"]
-        local metric = convTable[encounterType]["metric"]
+        metric = convTable[encounterType]["metric"]
 
         if playerTable[bossId] == nil then
             playerTable[bossId] = {}
