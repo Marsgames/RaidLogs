@@ -291,6 +291,8 @@ class Player:
         player_data.pop("server", None)
 
         for key, bossData in player_data.items():
+            if bossData["totalKills"] == 0: 
+                continue
             self.raids[key] = {
                 "encounter": wcl_alias_to_encounter_mapping[key],
                 "tag": key,
@@ -378,7 +380,11 @@ def upsert_players(players):
 
     requests = []
     for player in players.values():
+        if len(player.raids) < 1:
+            continue
+        
         set = { "name": player.name, "server": player.server, "region": player.region }
+
         for raid, v in player.raids.items():
             set[f"raids.{raid}"] = v 
         requests.append(

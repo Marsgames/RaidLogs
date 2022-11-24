@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import decimal
 from pymongo import MongoClient
@@ -5,6 +6,8 @@ from pymongo import MongoClient
 git_repo_url = "https://{0}@github.com/Marsgames/WarLogs.git"
 git_repo_path = "/tmp/WarLogs"
 wow_regions = ["EU", "CN", "KR", "TW", "US"]
+
+mapping = []
 
 def get_mongo_db():
     MONGO_USER = os.environ['MONGO_USER']
@@ -22,10 +25,8 @@ def get_mongo_db():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
-def get_players_per_region(db, region):
-    print(f"Retrieving all {region} player from MongoDB")
-    cursor = db.players.find({"region": region}, batch_size=1000)
-    print(f"Cursor generated")
+def get_players(db, region, server):
+    cursor = db.players.find({"region": region, "server": server}, batch_size=1000)
     return cursor
 
 def clone_git_repo():
@@ -54,43 +55,67 @@ def dump_lua(data):
         t += "}"
         return t
 
+#Get a "hash" kind of value for a specific difficulty/encounter/metric combination
+def get_hash(d, e, m):
+    global mapping
+    val = f"{e}:{d}:{m}"
+    if val not in mapping:
+        mapping.append(val)
+
+    return mapping.index(val)
+
 def transform_player_data_ugly(player):
     tmp_player_data = []
     for raid in player["raids"].values():
-        tmp_player_data.append(f"{raid['encounter']}:{raid['difficulty']}:{raid['metric']}:{raid['bestPerformance']}:{raid['averagePerformance']}:{raid['totalKills']}")
+        tmp_player_data.append(f"{get_hash(raid['difficulty'], raid['encounter'], raid['metric'])}:{raid['bestPerformance']}:{raid['averagePerformance']}:{raid['totalKills']}")
     
-    return tmp_player_data
+    return '/'.join(tmp_player_data)
 
-def generate_db(cursor, region):
+def generate_db(db, region):
     with open(f"{git_repo_path}/db/WL_DB_{region}.lua", "w") as db_file:
-        tmp_db = {}
-        idx = 0
-        for player in cursor: 
-            if idx % 1000 == 0: 
-                print(f"{region} - Processed {idx} players")
-            transformed_data = transform_player_data_ugly(player)
+        region_servers = db.players.distinct("server", {"region" : region})
+        lines = []
+        for server in region_servers:
+            tmp_db = {server: {}}
+            players = get_players(db, region, server)
+            for player in players: 
+                tmp_db[server][player["name"]] = transform_player_data_ugly(player)
+            print(f"Found {len(tmp_db[server])} players on {region}-{server}")
+            lines.append(f"WarLogsAddCharsToDB({dump_lua(tmp_db)})\n")
+        db_file.writelines(lines)
+    
+    return region
 
-            if player["server"] not in tmp_db:
-                tmp_db[player["server"]] = {}
-            
-            tmp_db[player["server"]][player["name"]] = transformed_data
-            idx += 1
+def generate_reverse_mapping():
+    global mapping
 
-        str_lua = dump_lua(tmp_db)
-        str_base = "local addonName, ns = ... \nlocal db = "
-        db_file.write(str_base + str_lua + "\nWarLogsAddCharsToDB(db)")
+    with open(f"{git_repo_path}/db/WL_DB_Tools.lua", "w") as db_file:
+        gnippam = {}
+        for k, v in enumerate(mapping):
+            gnippam[k] = { "difficulty": int(v.split(':')[1]), "encounter": int(v.split(':')[0]), "metric" : v.split(':')[2] }
+        
+        print(f"Saving reverse mapping...")
+        print(gnippam)
+        db_file.write(f"local gnippam = {dump_lua(gnippam)}")
 
 def commit():
     print(f"Commiting new db...")
     os.system(f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' && git push")
 
 def lambda_handler(event, ctx):
+    global mapping
+    mapping = []
+
     clone_git_repo()
     db = get_mongo_db()
-    for region in wow_regions:
-        cursor = get_players_per_region(db, region)
-        generate_db(cursor, region)
 
+    with ThreadPoolExecutor(max_workers=len(wow_regions)) as executor:
+        tasks = [executor.submit(generate_db, db, region) for region in wow_regions]
+        
+        for future in as_completed(tasks):
+            print(f"{future.result()} DB Generated")
+
+    generate_reverse_mapping()
     commit()
     return {
         'statusCode': 200
