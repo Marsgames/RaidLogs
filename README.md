@@ -3,6 +3,9 @@
 3. pipenv install
 4. Take env path and put it in create_lambda_archive.sh & replace path to repo root
 
+29: 5 => 370, 4 => 800, 3 => 630
+28: 5 => 370, 4 => 800, 3 => 600
+26: 5 => 400, 4 => 1000, 3 => 600
 ############## Amazon Stuff ###############
 1. WCLPlayerDiscover (player-finder in git) lambda is triggered every 36 hours through EventBridge events <br>
 It scraps all pages of player on WCL raid by raid, so there is 3 event (3 raids for current extension) calling the lambda with a payload like
