@@ -6,11 +6,11 @@ from pymongo import MongoClient, UpdateOne
 
 
 #We are using the playerspeed ranking as both healers and dps are in this category
-wcl_web_urls = [
-    "https://www.warcraftlogs.com/zone/rankings/table/{}/playerspeed/-1/4/10/5/Any/Any/0/0/0/0/0/?search=&page={}", #HM Ranking
-    "https://www.warcraftlogs.com/zone/rankings/table/{}/playerspeed/-1/3/10/5/Any/Any/0/0/0/0/0/?search=&page={}", #NM Ranking
-    "https://www.warcraftlogs.com/zone/rankings/table/{}/playerspeed/-1/5/20/5/Any/Any/0/0/0/0/0/?search=&page={}" #MM Ranking
-]
+wcl_web_urls = {
+    3:"https://www.warcraftlogs.com/zone/rankings/table/{}/playerspeed/-1/3/10/5/Any/Any/0/0/0/0/0/?search=&page={}", #NM Ranking
+    4:"https://www.warcraftlogs.com/zone/rankings/table/{}/playerspeed/-1/4/10/5/Any/Any/0/0/0/0/0/?search=&page={}", #HM Ranking
+    5:"https://www.warcraftlogs.com/zone/rankings/table/{}/playerspeed/-1/5/20/5/Any/Any/0/0/0/0/0/?search=&page={}" #MM Ranking
+}
 
 headers = {
     "Referer" :  "https://www.warcraftlogs.com/"
@@ -34,11 +34,11 @@ def connect_mongo():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
-def get_players_pages(url_template, raidId, pageLimitFrom, pageLimitTo):
+def get_players_pages(url_template, raidId, pageLimit):
     print(f"Discovering players for raid {raidId} @ {url_template}")
     players = []
 
-    for pageId in range(pageLimitFrom, pageLimitTo):
+    for pageId in range(1, pageLimit):
         response = requests.get(url_template.format(raidId, pageId), headers=headers)
 
         if not response.ok:
@@ -59,35 +59,37 @@ def get_players_pages(url_template, raidId, pageLimitFrom, pageLimitTo):
     print(f"Discovered {len(players)} players for raid {raidId} @ {url_template}")
     return players
 
-def upsert_players(players, raidId):
+def upsert_players(players, raidId, difficulty):
     print(f"Saving {len(players)} players to MongoDB")
     requests = []
     for id in players:
         requests.append(
-            UpdateOne({"_id": id}, { "$push": { "raidsToScrap": raidId } }, upsert=True)
+            UpdateOne({"_id": id}, { "$push": { f"raidsToScrap.{raidId}": difficulty } }, upsert=True)
         )
     
     mongo_client.discovers.bulk_write(requests, ordered=False)
 
 def lambda_handler(event, ctx):
     raid = event["raid"]
-    pageLimitFrom = event["fromPage"]
-    pageLimitTo = event["toPage"]
+    difficulty = event["difficulty"]
+    pageLimit = event["pageLimit"]
     all_players = []
     
     connect_mongo()
-
-    with ThreadPoolExecutor(max_workers=len(wcl_web_urls)) as executor:
-        tasks = [executor.submit(get_players_pages, url, raid, pageLimitFrom, pageLimitTo) for url in wcl_web_urls]
+    all_players = get_players_pages(wcl_web_urls[raid], raid, pageLimit)
+    print(f"Total number of players discovered for raid {raid} and difficulty {difficulty}: {len(all_players)}")
+    upsert_players(all_players, raid, difficulty)
+    #with ThreadPoolExecutor(max_workers=len(wcl_web_urls)) as executor:
+        #tasks = [executor.submit(get_players_pages, url, raid, pageLimitFrom, pageLimitTo) for url in wcl_web_urls]
         
         # process completed tasks
-        for future in as_completed(tasks):
-            all_players.extend(future.result())
+        #for future in as_completed(tasks):
+        #    all_players.extend(future.result())
 
-        all_players = [*set(all_players)]
-        print(f"Total number of players discovered across all difficulties from page {pageLimitFrom} to page {pageLimitTo} : {len(all_players)}")
-        upsert_players(all_players, raid)
+        #all_players = [*set(all_players)]
+        #print(f"Total number of players discovered across all difficulties from page {pageLimitFrom} to page {pageLimitTo} : {len(all_players)}")
+        #upsert_players(all_players, raid)
 
-        return {
-            'statusCode': 200
-        }
+        #return {
+        #    'statusCode': 200
+        #}
