@@ -1,11 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import boto3
 import requests
-import json
 from bs4 import BeautifulSoup
 import os
+from pymongo import MongoClient, UpdateOne
 
-sqs = boto3.client('sqs')
 
 #We are using the playerspeed ranking as both healers and dps are in this category
 wcl_web_urls = [
@@ -17,28 +15,30 @@ wcl_web_urls = [
 headers = {
     "Referer" :  "https://www.warcraftlogs.com/"
 }
+mongo_client = None
 
-sqs_max_batch_size = 10
-sqs_player_queue = "https://sqs.us-east-1.amazonaws.com/697133125351/wcl-discovered-players"
+def connect_mongo():
+    global mongo_client
+    MONGO_USER = os.environ['MONGO_USER']
+    MONGO_PASSWORD = os.environ['MONGO_PASSWORD']
+    MONGO_PORT = os.environ['MONGO_PORT']
 
-def split(list_a, chunk_size):
-  for i in range(0, len(list_a), chunk_size):
-    yield list_a[i:i + chunk_size]
+    client = MongoClient(
+        f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@149.202.45.54:{MONGO_PORT}/?authMechanism=DEFAULT",
+        serverSelectionTimeoutMS=2500
+    )
+    try:
+        # The ping command is cheap and does not require auth.
+        client.admin.command("ping")
+        mongo_client = client.wcl
+    except Exception as e:
+        print(f"Unable to connect to server:\n\t{e}")
 
-def send_discovered_players_in_queue(players, raid):
-    print(f'Sending playerId\'s in queue...')
-    #Ids should be unique in the batch
-    formatted_messages = [{"Id": str(id), "MessageBody":json.dumps({id:raid})} for id in players]
-    for batch in list(split(formatted_messages, sqs_max_batch_size)):
-        sqs.send_message_batch(QueueUrl=sqs_player_queue, Entries=batch)
-    print(f'Players saved in queue')
-
-def get_players_pages(url_template, raidId):
+def get_players_pages(url_template, raidId, pageLimitFrom, pageLimitTo):
     print(f"Discovering players for raid {raidId} @ {url_template}")
-    pageLimit = int(os.environ['WCL_PAGE_LIMIT'])
     players = []
 
-    for pageId in range(1, pageLimit):
+    for pageId in range(pageLimitFrom, pageLimitTo):
         response = requests.get(url_template.format(raidId, pageId), headers=headers)
 
         if not response.ok:
@@ -59,21 +59,34 @@ def get_players_pages(url_template, raidId):
     print(f"Discovered {len(players)} players for raid {raidId} @ {url_template}")
     return players
 
+def upsert_players(players, raidId):
+    print(f"Saving {len(players)} players to MongoDB")
+    requests = []
+    for id in players:
+        requests.append(
+            UpdateOne({"_id": id}, { "$push": { "raidsToScrap": raidId } }, upsert=True)
+        )
+    
+    mongo_client.discovers.bulk_write(requests, ordered=False)
+
 def lambda_handler(event, ctx):
     raid = event["raid"]
+    pageLimitFrom = event["fromPage"]
+    pageLimitTo = event["toPage"]
     all_players = []
+    
+    connect_mongo()
 
     with ThreadPoolExecutor(max_workers=len(wcl_web_urls)) as executor:
-        tasks = [executor.submit(get_players_pages, url, raid) for url in wcl_web_urls]
+        tasks = [executor.submit(get_players_pages, url, raid, pageLimitFrom, pageLimitTo) for url in wcl_web_urls]
         
         # process completed tasks
         for future in as_completed(tasks):
             all_players.extend(future.result())
 
         all_players = [*set(all_players)]
-        print(f"Total number of players discovered across all difficulties : {len(all_players)}")
-
-        send_discovered_players_in_queue(all_players, raid)
+        print(f"Total number of players discovered across all difficulties from page {pageLimitFrom} to page {pageLimitTo} : {len(all_players)}")
+        upsert_players(all_players, raid)
 
         return {
             'statusCode': 200

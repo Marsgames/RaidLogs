@@ -351,27 +351,27 @@ def get_auth_token(apiKeyName):
 
     return wcl_api_keys[apiKeyName]["token"]
 
-def get_players_stats_for_player(playerMsg, apiKeyName, players):
-    playerId = list(playerMsg.keys())[0]
-    raidId = list(playerMsg.values())[0]
+def get_players_stats_for_player(msg, apiKeyName, players):
+    playerId = msg["id"]
 
     headers = {
         'Authorization': f'Bearer {get_auth_token(apiKeyName)}',
         'Content-Type': 'application/json'
     }
 
-    query = wcl_queries[int(raidId)]
-    response = requests.request("POST", wcl_api_url, headers=headers, data=query.format(playerId))
+    for raidId in msg["raids"]:
+        query = wcl_queries[int(raidId)]
+        response = requests.request("POST", wcl_api_url, headers=headers, data=query.format(playerId))
 
-    if not response.ok:
-        raise Exception(f"Bad reponse from WCL (code {response.status_code}), probably limit reached") 
+        if not response.ok:
+            raise Exception(f"Bad reponse from WCL (code {response.status_code}), probably limit reached") 
 
-    player_data = response.json()["data"]["characterData"]["character"]
-    
-    if playerId in players:
-        players[playerId].append_raids_data(player_data)
-    else:
-        players[playerId] = Player(player_data, playerId)
+        player_data = response.json()["data"]["characterData"]["character"]
+        
+        if playerId in players:
+            players[playerId].append_raids_data(player_data)
+        else:
+            players[playerId] = Player(player_data, playerId)
 
     return players
 
@@ -388,7 +388,7 @@ def upsert_players(players):
         for raid, v in player.raids.items():
             set[f"raids.{raid}"] = v 
         requests.append(
-            UpdateOne({"_id": player.id}, {"$set": set}, upsert=True)
+            UpdateOne({"_id": int(player.id)}, {"$set": set}, upsert=True)
         )
     
     res = mongo_client.players.bulk_write(requests, ordered=False)
@@ -410,11 +410,11 @@ def get_remaining_wcl_points(apiKeyName):
     print(f"API Key : {apiKeyName} Budget : {result}")
     return result
 
-def can_i_run(msg_count, concurrency_count, wcl_remaining_points):
-    print(f"Budget - MSG Count : {msg_count} - Current Concurrency : {concurrency_count} - API Call Budget : {api_call_budget} - Remaining Points : {wcl_remaining_points}")
+def can_i_run(raid_count, concurrency_count, wcl_remaining_points):
+    print(f"Budget - Raid Count : {raid_count} - Current Concurrency : {concurrency_count} - API Call Budget : {api_call_budget} - Remaining Points : {wcl_remaining_points}")
 
     #At any time we can assume that the function can run completely if API Limit > Lambda Instance Concurrency * api_call_budget * nb_msg
-    if wcl_remaining_points > concurrency_count * api_call_budget * msg_count:
+    if wcl_remaining_points > concurrency_count * api_call_budget * raid_count:
         return True
     else:
         return False
@@ -433,29 +433,34 @@ def scheduler_reviver_run(resetIn):
 def decrease_lambda_concurrency(concurrency_count):
     lambda_client.put_function_concurrency(FunctionName=lambda_function_name, ReservedConcurrentExecutions=concurrency_count-1)
 
+def get_raid_count_from_batch(batch):
+    count = 0
+
+    for msg in batch:
+        count += len(msg["raids"])
+    
+    return count
+
 def lambda_handler(event, ctx):
     concurrency_count = lambda_client.get_function_concurrency(FunctionName=lambda_function_name)["ReservedConcurrentExecutions"]
 
     minResetIn = 3600
+    json_messages = [json.loads(record["body"]) for record in event['Records']]
+    print(f"Starting with {len(json_messages)} new messages")
+
     for keyName in wcl_api_keys.keys():
         api_budget = get_remaining_wcl_points(keyName)
-        
-        if can_i_run(len(event['Records']), concurrency_count, api_budget["remaining"]):
+        raidCount = get_raid_count_from_batch(json_messages)
+ 
+        if can_i_run(raidCount, concurrency_count, api_budget["remaining"]):
             print("Enough budget to handle all the calls, proceeding with players...")
             if mongo_client == None:
                 connect_mongo()
 
-            print(f"Starting with {len(event['Records'])} new messages")
-
             players = {}
 
-            for record in event['Records']:
-                playerMsg = json.loads(record["body"])
-                players = get_players_stats_for_player(playerMsg, keyName, players)
-                #sqs.delete_message(
-                #    QueueUrl=sqs_reports_queue,
-                #    ReceiptHandle=record["receiptHandle"]
-                #)
+            for msg in json_messages:
+                players = get_players_stats_for_player(msg, keyName, players)
             
             upsert_players(players)
 
