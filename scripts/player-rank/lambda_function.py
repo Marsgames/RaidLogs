@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+import time
 import boto3
 import requests
 import json
@@ -7,6 +9,7 @@ import os
 
 #The number of point used per request to WCL, approximative, this is used to stop a bit before the limit by multiplying with the number of message to process
 api_call_budget = int(os.environ['WCL_CALL_BUDGET'])
+
 wcl_token_url = "https://www.warcraftlogs.com/oauth/token"
 wcl_token_payload={'grant_type': 'client_credentials'}
 sqs_reports_queue = "https://sqs.us-east-1.amazonaws.com/697133125351/wcl-discovered-players"
@@ -16,28 +19,28 @@ sqs = boto3.client('sqs')
 wcl_api_keys = {
     "marsgames" : {
         "key": "OTdiOWVmODMtOTgwZi00ZTc0LTk1NDktZjNjN2E0MTk0NmU1OlJNem9jeHJOS2RhSmZpSkd2OXZjYVU2WkcwZjNTNjJCcE1rOE9Ueko=",
-        "last_auth": datetime.now() - timedelta(hours=2),
-        "token": None
+        "token": None,
+        "isExhausted": False
     },
     "wltemp1" : {
         "key": "OTdkMDlmZWYtOTViNC00ZjBkLTlkOTUtYzQ4NWUxNDg0NjNlOlQzSzlIRWJzYkJWcHVsbDNVdFA0ak9HWFhQZ1dOTWh6ckpPY0NvNmE=",
-        "last_auth": datetime.now() - timedelta(hours=2),
-        "token": None
+        "token": None,
+        "isExhausted": False
     },
     "wltemp2" : {
         "key": "OTdkMGEzZDEtNDVlZC00MGY3LWI4YWUtYmM4NGM2MDc4ZmNmOlRMWEswYmdiUlhCUWFQYVhYUkIxZVFOSkJjT2hmbUFQVk9JdlJkaHc=",
-        "last_auth": datetime.now() - timedelta(hours=2),
-        "token": None
+        "token": None,
+        "isExhausted": False
     },
     "wltemp3" : {
         "key": "OTdkMGE1ZjMtMWM1YS00ZjQ0LTkwMGMtMDVhOGU2YjI1YWE1OnRZV05yd2cwdEpWb0xUQXZmVUI1Y0paN3hWT0tIYmlRY0JuS1B5S2g=",
-        "last_auth": datetime.now() - timedelta(hours=2),
-        "token": None
+        "token": None,
+        "isExhausted": False
     },
     "wltemp4" : {
         "key": "OTdkMGE5N2MtZjA3ZS00YzNlLTlhNDYtNzllZTU2NGIzOGI4OkJzanlmdEExWlJwWEI3aTdUYlpkVllhR0dlcll1dExGZ3JZRVllWEk=",
-        "last_auth": datetime.now() - timedelta(hours=2),
-        "token": None
+        "token": None,
+        "isExhausted": False
     }
 }
 wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
@@ -148,107 +151,6 @@ wcl_query_template = "{{\"query\": \"query {{  \
         }} \
     }} \
 }}\"}}"
-wcl_query_payloads = {
-    26 : {
-        3: "Shriekwing_N: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 3) \
-            Huntsman_Altimor_N: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 3) \
-            Hungering_Destroyer_N: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 3) \
-            Sun_King__s_Salvation_N: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 3) \
-            Artificer_Xy__Mox_N: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 3) \
-            Lady_Inerva_Darkvein_N: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 3) \
-            The_Council_of_Blood_N: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 3) \
-            Sludgefist_N: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 3) \
-            Stone_Legion_Generals_N: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 3) \
-            Sire_Denathrius_N: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 3)",
-        4:"Shriekwing_H: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 4) \
-           Huntsman_Altimor_H: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 4) \
-           Hungering_Destroyer_H: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 4) \
-           Sun_King__s_Salvation_H: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 4) \
-           Artificer_Xy__Mox_H: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 4) \
-           Lady_Inerva_Darkvein_H: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 4) \
-           The_Council_of_Blood_H: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 4) \
-           Sludgefist_H: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 4) \
-           Stone_Legion_Generals_H: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 4) \
-           Sire_Denathrius_H: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 4)",
-        5: "Shriekwing_M: encounterRankings(byBracket: true, encounterID: 2398, compare: Parses, difficulty: 5) \
-            Huntsman_Altimor_M: encounterRankings(byBracket: true, encounterID: 2418, compare: Parses, difficulty: 5) \
-            Hungering_Destroyer_M: encounterRankings(byBracket: true, encounterID: 2383, compare: Parses, difficulty: 5) \
-            Sun_King__s_Salvation_M: encounterRankings(byBracket: true, encounterID: 2402, compare: Parses, difficulty: 5) \
-            Artificer_Xy__Mox_M: encounterRankings(byBracket: true, encounterID: 2405, compare: Parses, difficulty: 5) \
-            Lady_Inerva_Darkvein_M: encounterRankings(byBracket: true, encounterID: 2406, compare: Parses, difficulty: 5) \
-            The_Council_of_Blood_M: encounterRankings(byBracket: true, encounterID: 2412, compare: Parses, difficulty: 5) \
-            Sludgefist_M: encounterRankings(byBracket: true, encounterID: 2399, compare: Parses, difficulty: 5) \
-            Stone_Legion_Generals_M: encounterRankings(byBracket: true, encounterID: 2417, compare: Parses, difficulty: 5) \
-            Sire_Denathrius_M: encounterRankings(byBracket: true, encounterID: 2407, compare: Parses, difficulty: 5)"
-    },
-    28 : {
-        3: "The_Tarragrue_N: encounterRankings(byBracket: true, encounterID: 2423, compare: Parses, difficulty: 3) \
-            The_Eye_of_the_Jailer_N: encounterRankings(byBracket: true, encounterID: 2433, compare: Parses, difficulty: 3) \
-            The_Nine_N: encounterRankings(byBracket: true, encounterID: 2429, compare: Parses, difficulty: 3) \
-            Remnant_of_Ner__zhul_N: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 3) \
-            Soulrender_Dormazain_N: encounterRankings(byBracket: true, encounterID: 2434, compare: Parses, difficulty: 3) \
-            Painsmith_Raznal_N: encounterRankings(byBracket: true, encounterID: 2430, compare: Parses, difficulty: 3) \
-            Guardian_of_the_First_Ones_N: encounterRankings(byBracket: true, encounterID: 2436, compare: Parses, difficulty: 3) \
-            Fatescribe_Roh____Kalo_N: encounterRankings(byBracket: true, encounterID: 2431, compare: Parses, difficulty: 3) \
-            Kel__Thuzad_N: encounterRankings(byBracket: true, encounterID: 2422, compare: Parses, difficulty: 3) \
-            Sylvnas_Windrunner_N: encounterRankings(byBracket: true, encounterID: 2435, compare: Parses, difficulty: 3)",
-        4:"The_Tarragrue_H: encounterRankings(byBracket: true, encounterID: 2423, compare: Parses, difficulty: 4) \
-           The_Eye_of_the_Jailer_H: encounterRankings(byBracket: true, encounterID: 2433, compare: Parses, difficulty: 4) \
-           The_Nine_H: encounterRankings(byBracket: true, encounterID: 2429, compare: Parses, difficulty: 4) \
-           Remnant_of_Ner__zhul_H: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 4) \
-           Soulrender_Dormazain_H: encounterRankings(byBracket: true, encounterID: 2434, compare: Parses, difficulty: 4) \
-           Painsmith_Raznal_H: encounterRankings(byBracket: true, encounterID: 2430, compare: Parses, difficulty: 4) \
-           Guardian_of_the_First_Ones_H: encounterRankings(byBracket: true, encounterID: 2436, compare: Parses, difficulty: 4) \
-           Fatescribe_Roh____Kalo_H: encounterRankings(byBracket: true, encounterID: 2431, compare: Parses, difficulty: 4) \
-           Kel__Thuzad_H: encounterRankings(byBracket: true, encounterID: 2422, compare: Parses, difficulty: 4) \
-           Sylvnas_Windrunner_H: encounterRankings(byBracket: true, encounterID: 2435, compare: Parses, difficulty: 4)",
-        5: "The_Tarragrue_M: encounterRankings(byBracket: true, encounterID: 2423, compare: Parses, difficulty: 5) \
-            The_Eye_of_the_Jailer_M: encounterRankings(byBracket: true, encounterID: 2433, compare: Parses, difficulty: 5) \
-            The_Nine_M: encounterRankings(byBracket: true, encounterID: 2429, compare: Parses, difficulty: 5) \
-            Remnant_of_Ner__zhul_M: encounterRankings(byBracket: true, encounterID: 2432, compare: Parses, difficulty: 5) \
-            Soulrender_Dormazain_M: encounterRankings(byBracket: true, encounterID: 2434, compare: Parses, difficulty: 5) \
-            Painsmith_Raznal_M: encounterRankings(byBracket: true, encounterID: 2430, compare: Parses, difficulty: 5) \
-            Guardian_of_the_First_Ones_M: encounterRankings(byBracket: true, encounterID: 2436, compare: Parses, difficulty: 5) \
-            Fatescribe_Roh____Kalo_M: encounterRankings(byBracket: true, encounterID: 2431, compare: Parses, difficulty: 5) \
-            Kel__Thuzad_M: encounterRankings(byBracket: true, encounterID: 2422, compare: Parses, difficulty: 5) \
-            Sylvnas_Windrunner_M: encounterRankings(byBracket: true, encounterID: 2435, compare: Parses, difficulty: 5)"
-    },
-    29 : {
-        3: "Vigilant_Guardian_N: encounterRankings(byBracket: true, encounterID: 2512, compare: Parses, difficulty: 3) \
-            Dausegne____The_Fallen_Oracle_N: encounterRankings(byBracket: true, encounterID: 2540, compare: Parses, difficulty: 3) \
-            Artificer_Xy__Mox_ComeBack_N: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 3) \
-            Prototype_Pantheon_N: encounterRankings(byBracket: true, encounterID: 2544, compare: Parses, difficulty: 3) \
-            Skolex____the_Insatiable_Ravener_N: encounterRankings(byBracket: true, encounterID: 2542, compare: Parses, difficulty: 3) \
-            Halondrus_the_Reclaimer_N: encounterRankings(byBracket: true, encounterID: 2529, compare: Parses, difficulty: 3) \
-            Lihuvim____Principal_Architect_N: encounterRankings(byBracket: true, encounterID: 2539, compare: Parses, difficulty: 3) \
-            Anduin_Wrynn_N: encounterRankings(byBracket: true, encounterID: 2546, compare: Parses, difficulty: 3) \
-            Lords_of_Dread_N: encounterRankings(byBracket: true, encounterID: 2543, compare: Parses, difficulty: 3) \
-            Rygelon_N: encounterRankings(byBracket: true, encounterID: 2549, compare: Parses, difficulty: 3) \
-            The_Jailer_N: encounterRankings(byBracket: true, encounterID: 2537, compare: Parses, difficulty: 3)",
-        4: "Vigilant_Guardian_H: encounterRankings(byBracket: true, encounterID: 2512, compare: Parses, difficulty: 4) \
-            Dausegne____The_Fallen_Oracle_H: encounterRankings(byBracket: true, encounterID: 2540, compare: Parses, difficulty: 4) \
-            Artificer_Xy__Mox_ComeBack_H: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 4) \
-            Prototype_Pantheon_H: encounterRankings(byBracket: true, encounterID: 2544, compare: Parses, difficulty: 4) \
-            Skolex____the_Insatiable_Ravener_H: encounterRankings(byBracket: true, encounterID: 2542, compare: Parses, difficulty: 4) \
-            Halondrus_the_Reclaimer_H: encounterRankings(byBracket: true, encounterID: 2529, compare: Parses, difficulty: 4) \
-            Lihuvim____Principal_Architect_H: encounterRankings(byBracket: true, encounterID: 2539, compare: Parses, difficulty: 4) \
-            Anduin_Wrynn_H: encounterRankings(byBracket: true, encounterID: 2546, compare: Parses, difficulty: 4) \
-            Lords_of_Dread_H: encounterRankings(byBracket: true, encounterID: 2543, compare: Parses, difficulty: 4) \
-            Rygelon_H: encounterRankings(byBracket: true, encounterID: 2549, compare: Parses, difficulty: 4) \
-            The_Jailer_H: encounterRankings(byBracket: true, encounterID: 2537, compare: Parses, difficulty: 4)",
-        5: "Vigilant_Guardian_M: encounterRankings(byBracket: true, encounterID: 2512, compare: Parses, difficulty: 5) \
-            Dausegne____The_Fallen_Oracle_M: encounterRankings(byBracket: true, encounterID: 2540, compare: Parses, difficulty: 5) \
-            Artificer_Xy__Mox_ComeBack_M: encounterRankings(byBracket: true, encounterID: 2553, compare: Parses, difficulty: 5) \
-            Prototype_Pantheon_M: encounterRankings(byBracket: true, encounterID: 2544, compare: Parses, difficulty: 5) \
-            Skolex____the_Insatiable_Ravener_M: encounterRankings(byBracket: true, encounterID: 2542, compare: Parses, difficulty: 5) \
-            Halondrus_the_Reclaimer_M: encounterRankings(byBracket: true, encounterID: 2529, compare: Parses, difficulty: 5) \
-            Lihuvim____Principal_Architect_M: encounterRankings(byBracket: true, encounterID: 2539, compare: Parses, difficulty: 5) \
-            Anduin_Wrynn_M: encounterRankings(byBracket: true, encounterID: 2546, compare: Parses, difficulty: 5) \
-            Lords_of_Dread_M: encounterRankings(byBracket: true, encounterID: 2543, compare: Parses, difficulty: 5) \
-            Rygelon_M: encounterRankings(byBracket: true, encounterID: 2549, compare: Parses, difficulty: 5) \
-            The_Jailer_M: encounterRankings(byBracket: true, encounterID: 2537, compare: Parses, difficulty: 5)"
-    }
-}
 
 wcl_api_limit_query = "{\"query\": \"query {  \
     rateLimitData { \
@@ -271,29 +173,81 @@ class Player:
         player_data.pop("name", None)
         player_data.pop("server", None)
 
-        for key, bossData in player_data.items():
-            if bossData["totalKills"] == 0: 
+        for key, raidData in player_data.items():
+            #Should not happen, but skipping data if player never kill any boss in this raid difficulty
+            #Also happend when a player don't have a class defined in the app and no one hit the "update" button in the web interface
+            if raidData == None or raidData["medianPerformanceAverage"] == None: 
                 continue
-            self.raids[key] = {
-                "encounter": wcl_alias_to_encounter_mapping[key],
-                "tag": key,
-                "difficulty": bossData["difficulty"],
-                "zone": bossData["zone"],
-                "metric": bossData["metric"],
-                "averagePerformance": int(bossData["averagePerformance"] or 0),
-                "bestPerformance": int(max(rank["rankPercent"] for rank in bossData["ranks"]) if len(bossData["ranks"]) > 0 else 0),
-                "totalKills": bossData["totalKills"]
-            }
+            
+            for ranking in raidData["rankings"]:
+                #Skipping undone boss in the zone
+                if ranking["rankPercent"] == None:
+                    continue
+                
+                self.encounters[f"{key}_{ranking['encounter']['id']}"] = {
+                    "encounter": ranking['encounter'],
+                    "difficulty": raidData["difficulty"],
+                    "zone": raidData["zone"],
+                    "metric": raidData["metric"],
+                    "rankPercent": int(ranking["rankPercent"]),
+                    "totalKills": ranking["totalKills"],
+                    "allStars": self.get_safe_allstar_data(ranking["allStars"])
+                }
 
     def load_data_from_json(self, player_data, id):
         srv = player_data.pop("server")
         self.name = player_data.pop("name")
         self.id = id
         self.server = srv["name"]
-        self.raids = {}
+        self.encounters = {}
         self.region = srv["region"]["compactName"]
 
-        self.append_raids_data(player_data) 
+        self.append_raids_data(player_data)
+    
+    def get_safe_allstar_data(self, allstar_data):
+        allStarRank = 0
+        allStarRegionRank = 0
+        allStarServerRank = 0
+        allStarRankPercent = 0
+        
+        try:
+            allStarRank = int(allstar_data["rank"])
+        except Exception:
+            pass
+        
+        try:
+            allStarRegionRank = int(allstar_data["regionRank"])
+        except Exception:
+            pass
+            
+        try:
+            allStarServerRank = int(allstar_data["serverRank"])
+        except Exception:
+            pass
+        
+        try:
+            allStarRankPercent = int(allstar_data["rankPercent"])
+        except Exception:
+            pass
+            
+        return {
+            "rank": allStarRank,
+            "regionRank": allStarRegionRank,
+            "serverRank": allStarServerRank,
+            "rankPercent": allStarRankPercent
+        }
+
+class ApiKeyExhausted(Exception):
+    """WCL API Key return a 429 when used"""
+    pass
+
+class UnknownError(Exception):
+    """Unknown error, it's safer to abort run"""
+    pass
+
+class InvalidPlayerDataFormat(Exception):
+    """Unknown player data format sent from the API"""
+    pass
 
 def connect_mongo():
     global mongo_client
@@ -312,27 +266,45 @@ def connect_mongo():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
-def get_auth_token(apiKeyName):
+def get_auth_token(apiKeyName, retry=False):
     global wcl_api_keys
 
-    #Auth token is less than one hour old
-    if datetime.now() - timedelta(hours=1) <= wcl_api_keys[apiKeyName]["last_auth"]:
+    if wcl_api_keys[apiKeyName]["isExhausted"]:
+        raise ApiKeyExhausted
+    
+    if wcl_api_keys[apiKeyName]["token"] != None:
         return wcl_api_keys[apiKeyName]["token"]
 
-    #Token never generated on this container / more than an hour old
-    print(f"Renewing auth token for {apiKeyName}")
+    #Token never generated on this container
+    print(f"Generating auth token for {apiKeyName}...")
 
     headers = {
         "Authorization" : f"Basic {wcl_api_keys[apiKeyName]['key']}"
     }
     
     response = requests.request("POST", wcl_token_url, headers=headers, data=wcl_token_payload)
-    wcl_api_keys[apiKeyName]["last_auth"] = datetime.now()
-    wcl_api_keys[apiKeyName]["token"] = response.json()["access_token"]
 
+    #Handling case when api point limit reach, authentication is failing too
+    if response.ok:
+        wcl_api_keys[apiKeyName]["token"] = response.json()["access_token"]
+    elif not response.ok and int(response.headers["x-ratelimit-remaining"]) == 0 and int(response.headers["retry-after"]) <= 30 and not retry: 
+        #Hitting the API rate limit, not point limit, should sleep a bit, don't sleep to much neither cause it cost money, it's IP based and not API Key
+        print(f"[WARN] Auth failed because rate limit reached, sleeping... ({response.status_code}) : {response.headers}")
+        time.sleep(int(response.headers["retry-after"]) + 1)
+        return get_auth_token(apiKeyName, retry=True)
+    else:
+        print(f"[ERROR] Auth failed for unknown reason (Code : {response.status_code}, IsRetry : {retry})\n\t{response.headers}\n\t{response.text}")
+        abort_container_run()
+    
     return wcl_api_keys[apiKeyName]["token"]
 
-def get_players_stats_for_player(msg, apiKeyName, players):
+def set_api_key_exhausted(apiKeyName):
+    global wcl_api_keys
+
+    wcl_api_keys[apiKeyName]["isExhausted"] = True
+    wcl_api_keys[apiKeyName]["token"] = None
+
+def get_players_stats_for_player(msg, apiKeyName, players, thread):
     playerId = msg["id"]
 
     headers = {
@@ -340,37 +312,48 @@ def get_players_stats_for_player(msg, apiKeyName, players):
         'Content-Type': 'application/json'
     }
     query_payload = ""
+    idx = 0
+
     for raid in msg["raids"]:
-        for difficulty in msg["raids"]:
-            query_payload += wcl_query_payloads[raid][difficulty]
-        
+        for difficulty in msg["raids"][raid]:
+            query_payload += f"Alias_{raid}_{difficulty}: zoneRankings(byBracket: true, zoneID: {raid}, compare: Parses, difficulty: {difficulty})"
+            idx += 1
+    
     query = wcl_query_template.format(playerId, query_payload)
     response = requests.request("POST", wcl_api_url, headers=headers, data=query)
 
     if not response.ok:
-        raise Exception(f"Bad reponse from WCL (code {response.status_code}), probably limit reached") 
+        print(f"[ERROR] Unable to get player data ranks for playerId {playerId} (Code : {response.status_code})\n\t{response.text}")
+        return False, msg["messageId"]
 
-    player_data = response.json()["data"]["characterData"]["character"]
-            
-    if playerId in players:
-        players[playerId].append_raids_data(player_data)
-    else:
-        players[playerId] = Player(player_data, playerId)
-
-    return players
+    try:
+        player_data = response.json()["data"]["characterData"]["character"]
+                
+        if playerId in players:
+            players[playerId].append_raids_data(player_data)
+        else:
+            players[playerId] = Player(player_data, playerId)
+    except Exception as e:
+        print(f"[ERROR] Invalid player data payload (Code : {response.status_code}, Error : {e})\n\t{response.text}")
+        return False, msg["messageId"]
+    
+    return True, None
 
 def upsert_players(players):
-    print(f"Saving {len(players)} players to MongoDB")
+    if len(players) == 0:
+        return
+    
+    print(f"Saving {len(players)} players to MongoDB...")
 
     requests = []
     for player in players.values():
-        if len(player.raids) < 1:
+        if len(player.encounters) < 1:
             continue
         
         set = { "name": player.name, "server": player.server, "region": player.region }
 
-        for raid, v in player.raids.items():
-            set[f"raids.{raid}"] = v 
+        for encounterKey, data in player.encounters.items():
+            set[f"encounters.{encounterKey}"] = data
         requests.append(
             UpdateOne({"_id": int(player.id)}, {"$set": set}, upsert=True)
         )
@@ -378,26 +361,54 @@ def upsert_players(players):
     res = mongo_client.players.bulk_write(requests, ordered=False)
     print(res.bulk_api_result)
 
+def abort_container_run():
+    decrease_lambda_concurrency(1)
+    raise UnknownError
+
 def get_remaining_wcl_points(apiKeyName):    
+
+    auth_token = None
+
+    try:
+        auth_token = get_auth_token(apiKeyName)
+    except ApiKeyExhausted:
+        return { "remaining" : 0, "resetIn": 3600}
+    
+    #If API limit is reached the token will be None because auth has probably failed, so returning default data to skip this key
+    result = { "remaining" : 0, "resetIn": 3600}
+    
     headers = {
-        'Authorization': f'Bearer {get_auth_token(apiKeyName)}',
+        'Authorization': f'Bearer {auth_token}',
         'Content-Type': 'application/json'
     }
+
     response = requests.request("POST", wcl_api_url, headers=headers, data=wcl_api_limit_query)
+
+    if not response.ok and response.status_code == 429 and response.headers["retry-after"] and int(response.headers["retry-after"]) <= 30:
+        print(f"[WARN] Unable to get remaining budget for this key rate limit reached, sleeping...\n\t{response.headers}")
+        time.sleep(int(response.headers["retry-after"]) + 1)
+    elif not response.ok and response.status_code == 429:
+        print(f"[WARN] Unable to get remaining budget for this key assuming budget exhausted")
+        set_api_key_exhausted(apiKeyName)
+        return { "remaining" : 0, "resetIn": 3600}
+    elif not response.ok:
+        print(f"[ERROR] Unable to get remaining budget for unknown reasons")
+        abort_container_run()
+    
     data = response.json()
-    result = { "remaining" : 0, "resetIn": 1800}
 
-    if response.ok:
-        result["remaining"] = data["data"]["rateLimitData"]["limitPerHour"] - data["data"]["rateLimitData"]["pointsSpentThisHour"]
-        result["resetIn"] = data['data']['rateLimitData']['pointsResetIn']
+    result["remaining"] = data["data"]["rateLimitData"]["limitPerHour"] - data["data"]["rateLimitData"]["pointsSpentThisHour"]
+    result["resetIn"] = data['data']['rateLimitData']['pointsResetIn']
 
-    print(f"API Key : {apiKeyName} Budget : {result}")
     return result
 
 def can_i_run(raid_count, concurrency_count, wcl_remaining_points):
     print(f"Budget - Raid Count : {raid_count} - Current Concurrency : {concurrency_count} - API Call Budget : {api_call_budget} - Remaining Points : {wcl_remaining_points}")
 
-    #At any time we can assume that the function can run completely if API Limit > Lambda Instance Concurrency * api_call_budget * nb_msg
+    #At any time we can assume that the function can run completely if API Limit > Lambda Instance Concurrency * api_call_budget * estimated_call_count
+    #This is a greedy version as we are using this specific batch difficulties count to estimate other parallel lambda batch sizes which is potentially wrong
+    #The real worst case is len(batch) * nb_raid_in_extension * nb_difficulties_in_each_raid assuming all player in a batch did all the raids in all difficulties for all the other lambdas
+    #If we see too much exception from get_players_stats_for_player we should move to this worst case instead
     if wcl_remaining_points > concurrency_count * api_call_budget * raid_count:
         return True
     else:
@@ -431,9 +442,13 @@ def lambda_handler(event, ctx):
 
     minResetIn = 3600
     json_messages = [json.loads(record["body"]) for record in event['Records']]
-    print(f"Starting with {len(json_messages)} new messages")
+    print(f"Starting lambda with {len(json_messages)} new SQS messages")
 
     for keyName in wcl_api_keys.keys():
+        if wcl_api_keys[keyName]["isExhausted"]:
+            print(f"Skipping key {keyName} marked as exhausted")
+            continue
+        
         api_budget = get_remaining_wcl_points(keyName)
         call_count = get_raid_count_from_batch(json_messages)
  
@@ -444,25 +459,44 @@ def lambda_handler(event, ctx):
 
             players = {}
 
-            for msg in json_messages:
-                players = get_players_stats_for_player(msg, keyName, players)
-            
-            upsert_players(players)
+            with ThreadPoolExecutor(max_workers=len(json_messages)) as executor:
+                tasks = []
+                thread = 0
+                for msg in json_messages:
+                    tasks.append(executor.submit(get_players_stats_for_player, msg, keyName, players, thread))
+                    thread += 1
+                
+                failed_messages = []
 
-            return {
-                'statusCode': 200
-            }
+                for future in as_completed(tasks):
+                    if future.result()[0] == False:
+                        failed_messages.append(future.result()[1])
+
+                upsert_players(players)
+
+                if len(failed_messages) > 0:
+                    return {
+                        "batchItemFailures":[{"itemIdentifier": messageId for messageId in failed_messages}]
+                    }
+                else:
+                    return {
+                        'statusCode': 200
+                    }
         else:
-            print(f"Key {keyName} is exhausted")
+            print(f"Not enough budget for key {keyName} to run all messages...")
+
             if api_budget["resetIn"] < minResetIn:
                 minResetIn = api_budget["resetIn"]
 
     
-    print("Not enough budget to handle all the calls decreasing concurrency...")
+    print("No API Key found with enough budget to handle all the calls decreasing concurrency...")
     decrease_lambda_concurrency(concurrency_count)
 
     if concurrency_count == 1:
         print(f"Lambda has been disabled, scheduling the reviver func to run in at least {minResetIn} seconds")
         scheduler_reviver_run(minResetIn)
-    
-    raise Exception("Throw to not delete sqs messages")
+
+    #Safeguard to not delete SQS message which is the default behavior when lambda exit with success
+    return {
+        "batchItemFailures":[{"itemIdentifier": msg["messageId"] for msg in json_messages}]
+    }

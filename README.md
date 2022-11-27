@@ -22,7 +22,7 @@ Approx 5600 pages to scrap every 24h
 ############## Amazon Stuff ###############
 
 WCLPlayerDiscover (player-finder in git) 
-1. The lambda is triggered every 30 minutes through EventBridge scheduler <br>
+1. The lambda is triggered every 15 minutes from 3 am to 8 am through EventBridge scheduler <br>
 2. It looks for a discovery rule in the `discovery_schedules` collection of Mongo that hasn't been run since at least DELAY_DISCOVERY_IN_HOURS (24) hours
 ```
 {
@@ -66,7 +66,7 @@ Note :
 - More than 800 pages in one thread or even 1000 pages on 7 thread and 512 MB RAM and the Lambda reach the max timeout
 
 WCLPlayerDiscoverAggregator (player-finder-aggregator in git) 
-1. The lambda is triggered every few hours through EventBridge scheduler
+1. The lambda is triggered at 8am every day through EventBridge scheduler
 2. If all discovery rule in the `discovery_schedules` collection are less than 24 hours (means we have scrapped all the players for the day) then it continue
 3. It loads data from the `discovers` mongo collection
 4. Push all the data loaded into the `wcl-discovered-players` SQS queue (same format than in mongo)
