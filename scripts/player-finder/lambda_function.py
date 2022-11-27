@@ -71,7 +71,7 @@ def get_discovery_rule():
 
 def update_discovery_rule(discovery_rule):
     print(f"Updating lastRun of discovery rule...")
-    MONGO_CLIENT.discovery_schedules.update_one({"_id": discovery_rule["_id"]}, { "$set": { 'lastRun': datetime.datetime.now() } })
+    MONGO_CLIENT.discovery_schedules.update_one({"_id": discovery_rule["_id"]}, { "$set": { 'lastRun': datetime.datetime.now().timestamp() } })
 
 def upsert_players(players, raidId, difficulty):
     print(f"Saving players discovered infos to MongoDB...")
