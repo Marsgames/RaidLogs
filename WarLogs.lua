@@ -48,15 +48,15 @@ end
 -- Givent a data set, return a tooltip double line formatted string
 local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
     -- Get color for the rank percentage and difficulty "name"
-    local scoreColor = ternary(datas["best"] < 25, colors["grey"], ternary(datas["best"] < 50, colors["green"], ternary(datas["best"] < 75, colors["blue"], ternary(datas["best"] < 95, colors["purple"], ternary(datas["best"] < 99, colors["orange"], ternary(datas["best"] < 100, colors.pink, colors["herloom"]))))))
+    local scoreColor = ternary(datas["rank"] < 25, colors["grey"], ternary(datas["rank"] < 50, colors["green"], ternary(datas["rank"] < 75, colors["blue"], ternary(datas["rank"] < 95, colors["purple"], ternary(datas["rank"] < 99, colors["orange"], ternary(datas["rank"] < 100, colors.pink, colors["herloom"]))))))
     local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
 
     -- If there is a rank for this difficulty, and the difficulty is higher than the previous tested ones, add a line to the tooltip
-    if (difficulty > maxDifficulty and datas["best"] > 0) then
+    if (difficulty > maxDifficulty and datas["rank"] > 0) then
         maxDifficulty = difficulty
         local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
         lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
-        lineRight = scoreColor .. datas["best"] .. "%"
+        lineRight = scoreColor .. datas["rank"] .. "%"
     end
     return lineLeft, lineRight, maxDifficulty
 end
@@ -67,16 +67,15 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local playerTable = {}
     local metric = ""
 
-    -- new data format = "encounterType:best:average:killCount/encounterType2:..."
-    local raids = { strsplit("/", playerDatas) }
+    -- new data format = "encounterType:rankPercent:average:killCount/encounterType2:..."
+    local raids = {strsplit("/", playerDatas)}
 
     for _, boss in pairs(raids) do
         local splitTable = {strsplit(":", boss)}
 
         local encounterType = tonumber(splitTable[1])
-        local best = tonumber(splitTable[2])
-        local average = tonumber(splitTable[3])
-        local killCount = tonumber(splitTable[4])
+        local rank = tonumber(splitTable[2])
+        local killCount = tonumber(splitTable[3])
         local bossId = convTable[encounterType]["encounter"]
         local bossDifficulty = convTable[encounterType]["difficulty"]
         metric = convTable[encounterType]["metric"]
@@ -86,8 +85,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         end
         playerTable[bossId][bossDifficulty] = {
             ["metric"] = metric,
-            ["best"] = best,
-            ["average"] = average,
+            ["rank"] = rank,
             ["killCount"] = killCount
         }
     end
@@ -120,11 +118,11 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
             end
             datas = difficulties[4]
             if (datas) then
-            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 4, bossName)
+                lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 4, bossName)
             end
             datas = difficulties[5]
             if (datas) then
-            lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 5, bossName)
+                lineLeft, lineRight, maxDifficulty = ProcessLines(lineLeft, lineRight, maxDifficulty, datas, 5, bossName)
             end
         end
         if lineLeft == "" then
