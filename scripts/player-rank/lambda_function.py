@@ -304,7 +304,7 @@ def set_api_key_exhausted(apiKeyName):
     wcl_api_keys[apiKeyName]["isExhausted"] = True
     wcl_api_keys[apiKeyName]["token"] = None
 
-def get_players_stats_for_player(msg, apiKeyName, players, thread):
+def get_players_stats_for_player(msg, apiKeyName, players, msgId):
     playerId = msg["id"]
 
     headers = {
@@ -324,7 +324,7 @@ def get_players_stats_for_player(msg, apiKeyName, players, thread):
 
     if not response.ok:
         print(f"[ERROR] Unable to get player data ranks for playerId {playerId} (Code : {response.status_code})\n\t{response.text}")
-        return False, msg["messageId"]
+        return False, msgId
 
     try:
         player_data = response.json()["data"]["characterData"]["character"]
@@ -334,8 +334,12 @@ def get_players_stats_for_player(msg, apiKeyName, players, thread):
         else:
             players[playerId] = Player(player_data, playerId)
     except Exception as e:
-        print(f"[ERROR] Invalid player data payload (Code : {response.status_code}, Error : {e})\n\t{response.text}")
-        return False, msg["messageId"]
+        print(f"[WARN] Invalid player data payload (Code : {response.status_code}, Error : {e})\n\t{response.text}")
+        if "No class set for this character" in response.text:
+            #We can't do much, player profile is not set, deleteting message to not reprocess indefinitely with an error
+            return True, None
+        else:
+            return False, msgId
     
     return True, None
 
@@ -362,6 +366,7 @@ def upsert_players(players):
     print(res.bulk_api_result)
 
 def abort_container_run():
+    print("[ERROR] Unknown error, safer to abort for investigation")
     decrease_lambda_concurrency(1)
     raise UnknownError
 
@@ -461,10 +466,10 @@ def lambda_handler(event, ctx):
 
             with ThreadPoolExecutor(max_workers=len(json_messages)) as executor:
                 tasks = []
-                thread = 0
+                msgIdx = 0
                 for msg in json_messages:
-                    tasks.append(executor.submit(get_players_stats_for_player, msg, keyName, players, thread))
-                    thread += 1
+                    tasks.append(executor.submit(get_players_stats_for_player, msg, keyName, players, event['Records'][msgIdx]["messageId"]))
+                    msgIdx += 1
                 
                 failed_messages = []
 
@@ -498,5 +503,5 @@ def lambda_handler(event, ctx):
 
     #Safeguard to not delete SQS message which is the default behavior when lambda exit with success
     return {
-        "batchItemFailures":[{"itemIdentifier": msg["messageId"] for msg in json_messages}]
+        "batchItemFailures":[{"itemIdentifier": json.loads(msg["messageId"]) for msg in event['Records']}]
     }
