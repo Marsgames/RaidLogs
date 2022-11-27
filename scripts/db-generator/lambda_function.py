@@ -66,8 +66,14 @@ def get_hash(d, e, m):
 
 def transform_player_data_ugly(player):
     tmp_player_data = []
-    for raid in player["raids"].values():
-        tmp_player_data.append(f"{get_hash(raid['difficulty'], raid['encounter'], raid['metric'])}:{raid['bestPerformance']}:{raid['averagePerformance']}:{raid['totalKills']}")
+    for encounter in player["encounters"].values():
+        #Temp fix waiting for all db to be updated, should be removed in 1 or 2 day
+        encounterId = 0
+        if type(encounter['encounter']) == int:
+            encounterId = encounter['encounter']
+        else:
+            encounterId = encounter['encounter']['id']
+        tmp_player_data.append(f"{get_hash(encounter['difficulty'], encounterId, encounter['metric'])}:{encounter['rankPercent']}:{encounter['totalKills']}")
     
     return '/'.join(tmp_player_data)
 
