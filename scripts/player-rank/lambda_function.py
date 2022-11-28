@@ -505,5 +505,5 @@ def lambda_handler(event, ctx):
 
     #Safeguard to not delete SQS message which is the default behavior when lambda exit with success
     return {
-        "batchItemFailures":[{"itemIdentifier": json.loads(msg["messageId"]) for msg in event['Records']}]
+        "batchItemFailures":[{"itemIdentifier": msg["messageId"] for msg in event['Records']}]
     }
