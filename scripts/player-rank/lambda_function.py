@@ -287,7 +287,7 @@ def get_auth_token(apiKeyName, retry=False):
     #Handling case when api point limit reach, authentication is failing too
     if response.ok:
         wcl_api_keys[apiKeyName]["token"] = response.json()["access_token"]
-    elif not response.ok and int(response.headers["x-ratelimit-remaining"]) == 0 and int(response.headers["retry-after"]) <= 30 and not retry: 
+    elif not response.ok and int(response.headers["x-ratelimit-remaining"]) == 0 and int(response.headers["retry-after"]) <= 60 and not retry: 
         #Hitting the API rate limit, not point limit, should sleep a bit, don't sleep to much neither cause it cost money, it's IP based and not API Key
         print(f"[WARN] Auth failed because rate limit reached, sleeping... ({response.status_code}) : {response.headers}")
         time.sleep(int(response.headers["retry-after"]) + 1)
@@ -389,7 +389,7 @@ def get_remaining_wcl_points(apiKeyName):
 
     response = requests.request("POST", wcl_api_url, headers=headers, data=wcl_api_limit_query)
 
-    if not response.ok and response.status_code == 429 and response.headers["retry-after"] and int(response.headers["retry-after"]) <= 30:
+    if not response.ok and response.status_code == 429 and response.headers["retry-after"] and int(response.headers["retry-after"]) <= 60:
         print(f"[WARN] Unable to get remaining budget for this key rate limit reached, sleeping...\n\t{response.headers}")
         time.sleep(int(response.headers["retry-after"]) + 1)
     elif not response.ok and response.status_code == 429:
@@ -464,7 +464,9 @@ def lambda_handler(event, ctx):
 
             players = {}
 
-            with ThreadPoolExecutor(max_workers=len(json_messages)) as executor:
+            #Multithread is more a headache than a solution here, better go with simple for loop
+            #Nightmare to manage multithread + lambda concurrency and handle all the rate limit errors
+            with ThreadPoolExecutor(max_workers=1) as executor:
                 tasks = []
                 msgIdx = 0
                 for msg in json_messages:
