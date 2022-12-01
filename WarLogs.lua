@@ -28,7 +28,8 @@ local colors = {
 }
 
 -- Load bosses data for current expansion + get player name and realm
-local extBosses = db["Extension"]["Shadowlands"]
+-- TODO: Set extension to "Dragonflight" when the first raid of the expansion is released
+local extBosses = db["Extension"]["Dragonflight"]
 local convTable = ns.gnippam
 local playerName = GetUnitName("player")
 local playerRealm = GetRealmName()
@@ -145,8 +146,17 @@ local function InitAddon(unitName, unitRealm)
         local ri = RaiderIO_ProfileTooltip
         frame:SetPoint("TOPLEFT", ri, "TOPRIGHT", 0, 0)
     else
+        local xOffset = 0
+        -- TODO: Tester ce code quand une première instance sort en LFR (il faudra surement tweaker l'offset)
+        -- if (IsAddOnLoaded("GearHelper")) then
+        --     local buttons = lfrCheckButton_GlobalName
+        --     if (buttons) then
+        --         xOffset = 20
+        --     end
+        -- end
+        -- TODO: Remove offset when hidding the LFR button
         frame:ClearAllPoints()
-        frame:SetPoint("TOPLEFT", PVEFrame, "TOPRIGHT", 0, 0)
+        frame:SetPoint("TOPLEFT", PVEFrame, "TOPRIGHT", xOffset, 0)
     end
 
     if (unitName == "Niisha" and unitRealm == "Temple noir") or (unitName == "Tempaxe" and unitRealm == "Temple noir") or (unitName == "Mío" and unitRealm == "Hyjal") then
@@ -167,14 +177,14 @@ local function InitAddon(unitName, unitRealm)
         if (not IsAltKeyDown()) and not (englishName == nil) then
             ProcessRaid(raidID, frame, unitRealm, unitName, false)
         else
-            ProcessRaid(29, frame, unitRealm, unitName)
-            ProcessRaid(28, frame, unitRealm, unitName, true)
-            ProcessRaid(26, frame, unitRealm, unitName, true)
+            -- ProcessRaid(28, frame, unitRealm, unitName, true)
+            -- ProcessRaid(26, frame, unitRealm, unitName, true)
+            ProcessRaid(31, frame, unitRealm, unitName)
         end
     else
-        ProcessRaid(29, frame, unitRealm, unitName)
-        ProcessRaid(28, frame, unitRealm, unitName, true)
-        ProcessRaid(26, frame, unitRealm, unitName, true)
+        -- ProcessRaid(28, frame, unitRealm, unitName, true)
+        -- ProcessRaid(26, frame, unitRealm, unitName, true)
+        ProcessRaid(31, frame, unitRealm, unitName)
     end
 
     return frame
