@@ -1,3 +1,8 @@
+-- TODOs:
+-- Shows a condensed version of raids ranking on player tooltip (shows raids + average, but not the individual bosses ranking)
+-- Fix an issue when the player press alt and the pveFrame is not shown
+-- Only show all bosses datas for players applying for the group
+
 local addonName, ns = ...
 
 local db = ns.db
@@ -278,3 +283,137 @@ end
 local f = CreateFrame("Frame")
 f:RegisterEvent("MODIFIER_STATE_CHANGED")
 f:SetScript("OnEvent", OnModifierStateChange)
+
+-- THIS IS somehow HOW RAIDER.IO IS DOING "only applyant" TOOLTIP PROCESSING
+--[[
+local ScrollBoxUtil do
+   
+   ScrollBoxUtil = {}
+   
+   ---@class CallbackRegistryMixin
+   ---@field public RegisterCallback fun(event: string, callback: fun())
+   
+   ---@class ScrollBoxBaseMixin : CallbackRegistryMixin
+   ---@field public GetFrames fun(): Frame[]
+   ---@field public Update fun()
+   
+   ---@param scrollBox ScrollBoxBaseMixin
+   ---@param callback fun(frames: Button[], scrollBox: ScrollBoxBaseMixin)
+   function ScrollBoxUtil:OnViewFramesChanged(scrollBox, callback)
+      if not scrollBox then
+         return
+      end
+      if scrollBox.buttons then -- TODO: legacy 9.X support
+         callback(scrollBox.buttons, scrollBox)
+         return 1
+      end
+      if scrollBox.RegisterCallback then
+         local frames = scrollBox:GetFrames()
+         if frames and frames[1] then
+            callback(frames, scrollBox)
+         end
+         scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnUpdate, function()
+               frames = scrollBox:GetFrames()
+               callback(frames, scrollBox)
+         end)
+         return true
+      end
+      return false
+   end
+   
+   ---@param scrollBox ScrollBoxBaseMixin
+   ---@param callback fun(self: ScrollBoxBaseMixin)
+   function ScrollBoxUtil:OnViewScrollChanged(scrollBox, callback)
+      if not scrollBox then
+         return
+      end
+      local function wrappedCallback()
+         callback(scrollBox)
+      end
+      if scrollBox.update then -- TODO: legacy 9.X support
+         hooksecurefunc(scrollBox, "update", wrappedCallback)
+         return 1
+      end
+      if scrollBox.RegisterCallback then
+         scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnScroll, wrappedCallback)
+         return true
+      end
+      return false
+   end
+   
+end
+
+local HookUtil do
+   
+   HookUtil = {}
+   
+   local hooked = {}
+   
+   ---@param frame Frame
+   ---@param callback fun(self: Frame, ...)
+   ---@param ... string
+   function HookUtil:On(frame, callback, ...)
+      local hook = hooked[frame]
+      if not hook then
+         hook = {}
+         hooked[frame] = hook
+      end
+      for _, key in ipairs({...}) do
+         local keyHook = hook[key]
+         if not keyHook then
+            keyHook = {}
+            hook[key] = keyHook
+         end
+         if not keyHook[callback] then
+            keyHook[callback] = true
+            frame:HookScript(key, callback)
+         end
+      end
+   end
+   
+   ---@param frames Frame[]
+   ---@param callback fun(self: Frame, ...)
+   ---@param ... string
+   function HookUtil:OnAll(frames, callback, ...)
+      for _, frame in ipairs(frames) do
+         HookUtil:On(frame, callback, ...)
+      end
+   end
+   
+   ---@param object Frame[]|Frame
+   ---@param map table<string, fun()>
+   function HookUtil:MapOn(object, map)
+      if type(object) ~= "table" then
+         return
+      end
+      if type(object.GetObjectType) == "function" then
+         for key, callback in pairs(map) do
+            HookUtil:On(object, callback, key)
+         end
+         return 1
+      end
+      for key, callback in pairs(map) do
+         HookUtil:OnAll(object, callback, key)
+      end
+      return true
+   end
+   
+end
+
+local function OnScroll()
+   --print("Call when opening frame or when someone queues")
+end
+local function OnEnter(self)
+   local applicantID = self.applicantID
+   local infos = C_LFGList.GetApplicantMemberInfo(applicantID, 1)
+   
+   print(infos)
+end
+local function OnLeave()
+end
+
+local hookMap = { OnEnter = OnEnter, OnLeave = OnLeave }
+
+ScrollBoxUtil:OnViewFramesChanged(LFGListFrame.ApplicationViewer.ScrollBox, function(buttons) HookUtil:MapOn(buttons, hookMap) end)
+--ScrollBoxUtil:OnViewScrollChanged(LFGListFrame.ApplicationViewer.ScrollBox, OnScroll)
+]] --
