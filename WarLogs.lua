@@ -258,22 +258,25 @@ local function OnModifierStateChange(self, event, key, status)
     if (key == "LALT") then
         -- TODO: Issue if the realm is the same as the current player
         if (_G["GameTooltipTextLeft1"]) then
-            local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
-            if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
-                local containsSpace = name:find(" ")
-                if (not containsSpace) then
-                    local id = C_LFGList.GetActiveEntryInfo().activityID
-                    local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
-                    local tt = InitAddon(name, realm)
-                    if (name and realm) then
-                        tt:Show()
-                    else
-                        tt:Hide()
+            local text = _G["GameTooltipTextLeft1"]:GetText()
+            if (text) then
+                local name, realm = text:match("(.+)%-(.+)")
+                if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
+                    local containsSpace = name:find(" ")
+                    if (not containsSpace) then
+                        local id = C_LFGList.GetActiveEntryInfo().activityID
+                        local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
+                        local tt = InitAddon(name, realm)
+                        if (name and realm) then
+                            tt:Show()
+                        else
+                            tt:Hide()
+                        end
                     end
+                else
+                    local tt = InitAddon(playerName, playerRealm)
+                    tt:Hide()
                 end
-            else
-                local tt = InitAddon(playerName, playerRealm)
-                tt:Hide()
             end
         end
     end
