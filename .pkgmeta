@@ -1,5 +1,4 @@
-package-as: WarLogs @project-version@
-enable-nolib-creation: no
+package-as: WarLogs
 
 move-folders:
     WarLogs/db/WarLogs_DB_CN: WarLogs_DB_CN
