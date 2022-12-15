@@ -1,4 +1,5 @@
-package-as: WarLogs
+package-as: WarLogs @project-version@
+enable-nolib-creation: no
 
 move-folders:
     WarLogs/db/WarLogs_DB_CN: WarLogs_DB_CN
@@ -12,7 +13,7 @@ plain-copy:
 
 ignore:
  - README.md
- - scripts/
+ - scripts
  - .vscode
  - .gitignore
  - .github
