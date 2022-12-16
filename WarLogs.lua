@@ -1,8 +1,3 @@
--- TODOs:
--- Shows a condensed version of raids ranking on player tooltip (shows raids + average, but not the individual bosses ranking)
--- Fix an issue when the player press alt and the pveFrame is not shown
--- Only show all bosses datas for players applying for the group
-
 local addonName, ns = ...
 
 local db = ns.db
