@@ -12,39 +12,22 @@ function WarLogsAddCharsToDB(charsTable)
     end
 end
 
--- Colors used in the addon (principally for the rank percentages)
--- Maybe we should use a ToolBox namespace for this?
-local colors = {
-    ["grey"] = "|cff9d9d9d",
-    ["gray"] = "|cff9d9d9d",
-    ["green"] = "|cff1eff00",
-    ["blue"] = "|cff0070dd",
-    ["purple"] = "|cffa335ee",
-    ["orange"] = "|cffff8000",
-    ["pink"] = "|cffeb569c",
-    ["herloom"] = "|cffe6cc80",
-    ["white"] = "|cffffffff",
-    ["yellow"] = "|cffffff00"
-}
-
 -- Load bosses data for current expansion + get player name and realm
--- TODO: Set extension to "Dragonflight" when the first raid of the expansion is released
 local extBosses = db["Extension"]["Dragonflight"]
-local convTable = ns.gnippam
 local playerName = GetUnitName("player")
 local playerRealm = GetRealmName()
 
--- Givent a data set, return a tooltip double line formatted string
+-- Given a data set, return a tooltip double line formatted string
 local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
     -- Get color for the rank percentage and difficulty "name"
     local scoreColor = WLToolbox:ScoreToColor(datas["rank"])
-    local diffName = WLToolbox:DifficultyNumberToName(difficulty)
+    local diffName = WLToolbox:DifficultyToName(difficulty)
 
     -- If there is a rank for this difficulty, and the difficulty is higher than the previous tested ones, add a line to the tooltip
     if (difficulty > maxDifficulty and datas["rank"] > 0) then
         maxDifficulty = difficulty
-        local diffColor = WLToolbox:Ternary(diffName == "N", colors["green"], WLToolbox:Ternary(diffName == "H", colors["blue"], colors["purple"]))
-        lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
+        local diffColor = WLToolbox:Ternary(diffName == "N", WLToolbox.colors["green"], WLToolbox:Ternary(diffName == "H", WLToolbox.colors["blue"], WLToolbox.colors["purple"]))
+        lineLeft = diffColor .. diffName .. " " .. WLToolbox.colors["white"] .. bossName
         lineRight = scoreColor .. datas["rank"] .. "%"
     end
     return lineLeft, lineRight, maxDifficulty
@@ -61,9 +44,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     end
 
     --local TankIcon = "|A:4259:19:19|a" -- Should not appear
-    local HealerIcon = "|A:4258:19:19|a"
-    local DPSIcon = "|A:4257:19:19|a"
-    frame:AddDoubleLine(raidName, WLToolbox:Ternary(metric == "dps", DPSIcon, WLToolbox:Ternary(metric == "hps", HealerIcon, "")))
+    frame:AddDoubleLine(raidName, WLToolbox:MetricToIcon(metric))
 
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
@@ -92,7 +73,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
             end
         end
         if lineLeft == "" then
-            frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
+            frame:AddDoubleLine(WLToolbox.colors.grey .. "-  " .. bossName, "")
         else
             frame:AddDoubleLine(lineLeft, lineRight)
         end
@@ -105,10 +86,10 @@ local function ProcessEmptyRaid(raid, frame, addLineBefore)
     if (addLineBefore) then
         frame:AddLine(" ")
     end
-    frame:AddDoubleLine(raidName, colors.grey .. "No data")
+    frame:AddDoubleLine(raidName, WLToolbox.colors.grey .. "No data")
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
-        frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
+        frame:AddDoubleLine(WLToolbox.colors.grey .. "-  " .. bossName, "")
     end
 end
 
@@ -136,9 +117,9 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
     end
 
     if (unitName == "Niisha" and unitRealm == "Temple noir") or (unitName == "Tempaxe" and unitRealm == "Temple noir") or (unitName == "Mío" and unitRealm == "Hyjal") then
-        frame:AddLine(colors.green .. unitName .. colors.white .. " - " .. colors.blue .. unitRealm .. colors.white .. " | " .. colors.purple .. "Author")
+        frame:AddLine(WLToolbox.colors.green .. unitName .. WLToolbox.colors.white .. " - " .. WLToolbox.colors.blue .. unitRealm .. WLToolbox.colors.white .. " | " .. WLToolbox.colors.purple .. "Author")
     else
-        frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
+        frame:AddLine(WLToolbox.colors.white .. unitName .. " - " .. unitRealm)
     end
     frame:AddLine(" ")
 
@@ -172,6 +153,13 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
 end
 
 -- This function shows average ranking for each raid on player tooltip
+--[[
+        Niisha - Temple noir
+
+        WarLogs Average Ranking
+        H Vault of the Incarnates   hps 69%
+        M Tomb of Sargeras          dps 99%
+    ]]
 local function ProcessOveringTooltip(mouseoverName)
     local tooltipFirstLine = _G["GameTooltipTextLeft1"]:GetText()
     if (tooltipFirstLine == nil) then
@@ -189,12 +177,16 @@ local function ProcessOveringTooltip(mouseoverName)
         playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
         for i = 1, #raidIDs do
             local raidID = raidIDs[i]
-            local difficulty, raidName, score = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
+            local difficulty, raidName, score, metric = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
 
             if (score > 0) then
-                GameTooltip:AddDoubleLine(WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyNumberToName(difficulty) .. " " .. colors.white .. raidName, WLToolbox:ScoreToColor(score) .. score)
+                local difficulty = (WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyToName(difficulty))
+                local raidName = (WLToolbox.colors.white .. raidName)
+                local score = (WLToolbox:ScoreToColor(score) .. score .. "%")
+                local metricIcon = WLToolbox:MetricToIcon(metric)
+                GameTooltip:AddDoubleLine(difficulty .. " " .. raidName, metricIcon .. " " .. score)
             else
-                GameTooltip:AddDoubleLine(colors.grey .. "- " .. raidName, colors.grey .. "No data")
+                GameTooltip:AddDoubleLine(WLToolbox.colors.grey .. "- " .. raidName, WLToolbox.colors.grey .. "No data")
             end
         end
     end

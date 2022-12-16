@@ -3,6 +3,21 @@ WLToolbox.__index = WLToolbox
 
 local addonName, ns = ...
 local db = ns.db
+local convTable = ns.gnippam
+
+-- Colors used in the addon (principally for the rank percentages)
+WLToolbox.colors = {
+    ["grey"] = "|cff9d9d9d",
+    ["gray"] = "|cff9d9d9d",
+    ["green"] = "|cff1eff00",
+    ["blue"] = "|cff0070dd",
+    ["purple"] = "|cffa335ee",
+    ["orange"] = "|cffff8000",
+    ["pink"] = "|cffeb569c",
+    ["herloom"] = "|cffe6cc80",
+    ["white"] = "|cffffffff",
+    ["yellow"] = "|cffffff00"
+}
 
 -- Ternary function to reduce the number of lines in the code
 -- Maybe who should use something like a quarternary function to reduce the number of lines even more?
@@ -15,10 +30,6 @@ function WLToolbox:Ternary(condition, ifTrue, ifFalse)
     end
 end
 -- TODO: Create something that looks like a switch/case statement
-
-function WLToolbox:DifficultyNumberToName(difficulty)
-    return WLToolbox:Ternary(difficulty == 5, "M", WLToolbox:Ternary(difficulty == 4, "H", "N"))
-end
 
 function WLToolbox:SplitDatasForPlayer(name, realm)
     if (realm == nil) then
@@ -58,10 +69,11 @@ function WLToolbox:SplitDatasForPlayer(name, realm)
 end
 
 function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
-    playerDatas = WLToolbox:SplitDatasForPlayer(charData, name, realm)
+    playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
     local difficulty = ""
     local raidName = db.RaidName[raid]
     local score = 0
+    local metric = ""
 
     local average = 0
     local count = 0
@@ -81,6 +93,7 @@ function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
         if (count > 0) then
             difficulty = diff
             score = average / count
+            metric = playerDatas[bossIDs[1]][diff]["metric"]
             return difficulty, raidName, score
         end
     end
@@ -89,12 +102,20 @@ function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
 end
 
 function WLToolbox:ScoreToColor(score)
-    return WLToolbox:Ternary(score < 25, colors["grey"], WLToolbox:Ternary(score < 50, colors["green"], WLToolbox:Ternary(score < 75, colors["blue"], WLToolbox:Ternary(score < 95, colors["purple"], WLToolbox:Ternary(score < 99, colors["orange"], WLToolbox:Ternary(score < 100, colors.pink, colors["herloom"]))))))
+    return WLToolbox:Ternary(score < 25, WLToolbox.colors["grey"], WLToolbox:Ternary(score < 50, WLToolbox.colors["green"], WLToolbox:Ternary(score < 75, WLToolbox.colors["blue"], WLToolbox:Ternary(score < 95, WLToolbox.colors["purple"], WLToolbox:Ternary(score < 99, WLToolbox.colors.orange, WLToolbox:Ternary(score < 100, WLToolbox.colors.pink, WLToolbox.colors.herloom))))))
+end
+
+function WLToolbox:DifficultyToName(difficulty)
+    return WLToolbox:Ternary(difficulty == 5, "M", WLToolbox:Ternary(difficulty == 4, "H", "N"))
 end
 
 function WLToolbox:DifficultyToColor(difficulty)
     if (type(difficulty) == "string") then
-        return WLToolbox:Ternary(difficulty == "M", colors["purple"], WLToolbox:Ternary(difficulty == "H", colors["blue"], colors["green"]))
+        return WLToolbox:Ternary(difficulty == "M", WLToolbox.colors["purple"], WLToolbox:Ternary(difficulty == "H", WLToolbox.colors["blue"], WLToolbox.colors["green"]))
     end
-    return WLToolbox:Ternary(difficulty == 5, colors["purple"], WLToolbox:Ternary(difficulty == 4, colors["blue"], colors["green"]))
+    return WLToolbox:Ternary(difficulty == 5, WLToolbox.colors["purple"], WLToolbox:Ternary(difficulty == 4, WLToolbox.colors["blue"], WLToolbox.colors["green"]))
+end
+
+function WLToolbox:MetricToIcon()
+    return WLToolbox:Ternary(metric == "dps", "|A:4257:19:19|a", "|A:4258:19:19|a")
 end
