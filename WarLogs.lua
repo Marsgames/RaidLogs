@@ -139,13 +139,21 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     end
 end
 
+local function ProcessEmptyRaid(raid, frame, addLineBefore)
+    local raidName = db.RaidName[raid]
+    if (addLineBefore) then
+        frame:AddLine(" ")
+    end
+    frame:AddDoubleLine(raidName, colors.grey .. "No data")
+    for i = 0, #extBosses[raid] do
+        local bossName = extBosses[raid][i]
+        frame:AddDoubleLine(colors.grey .. "-  " .. bossName, "")
+    end
+end
+
 local function InitAddon(unitName, unitRealm)
     local frame = WarLogsFrame or CreateFrame("GameTooltip", "WarLogsFrame", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
-
-    if (not charData[unitRealm] or not charData[unitRealm][unitName]) then
-        return frame
-    end
 
     if (IsAddOnLoaded("RaiderIO")) then
         local ri = RaiderIO_ProfileTooltip
@@ -170,6 +178,11 @@ local function InitAddon(unitName, unitRealm)
         frame:AddLine(colors.white .. unitName .. " - " .. unitRealm)
     end
     frame:AddLine(" ")
+
+    if (not charData[unitRealm] or not charData[unitRealm][unitName]) then
+        ProcessEmptyRaid(31, frame, false)
+        return frame
+    end
 
     if not (C_LFGList.GetActiveEntryInfo() == nil) and not (unitName == playerName and unitRealm == playerRealm) then
         local infos = C_LFGList.GetActiveEntryInfo()
@@ -202,6 +215,7 @@ PVEFrame:HookScript(
     function()
         local tt = InitAddon(playerName, playerRealm)
         tt:Show()
+        print("Shown")
         pveFrameIsShown = true
     end
 )
@@ -219,37 +233,39 @@ PVEFrame:HookScript(
 -- If it's a player tooltip, we extract player name and realm
 -- Then, we check if the player is in a LFG group (that would mean that this tooltip is for a player applying to a group)
 -- If he is, we check try to show the tooltip for the applying member
-GameTooltip:HookScript(
-    "OnShow",
-    function()
-        -- TODO: Issue if the realm is the same as the current player
-        local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
-        if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
-            local containsSpace = name:find(" ")
-            if (not containsSpace) then
-                local id = C_LFGList.GetActiveEntryInfo().activityID
-                local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
-                local tt = InitAddon(name, realm)
-                if (name and realm) then
-                    tt:Show()
-                else
-                    tt:Hide()
-                end
-            end
-        end
-    end
-)
-GameTooltip:HookScript(
-    "OnHide",
-    function()
-        local tt = InitAddon(playerName, playerRealm)
-        if (pveFrameIsShown) then
-            tt:Show()
-        else
-            tt:Hide()
-        end
-    end
-)
+-- GameTooltip:HookScript(
+--     "OnShow",
+--     function()
+--         -- TODO: Issue if the realm is the same as the current player
+--         local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
+--         if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
+--             local containsSpace = name:find(" ")
+--             if (not containsSpace) then
+--                 local id = C_LFGList.GetActiveEntryInfo().activityID
+--                 local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
+--                 local tt = InitAddon(name, realm)
+--                 if (name and realm) then
+--                     tt:Show()
+--                 else
+--                     tt:Hide()
+--                 end
+--             end
+--         else
+--             print("on affiche pas")
+--         end
+--     end
+-- )
+-- GameTooltip:HookScript(
+--     "OnHide",
+--     function()
+--         local tt = InitAddon(playerName, playerRealm)
+--         if (pveFrameIsShown) then
+--             tt:Show()
+--         else
+--             tt:Hide()
+--         end
+--     end
+-- )
 
 -- Update the tooltip if the player use LALT modifier
 -- It's a big fat ugly copy/paste of the GameTooltip:HookScript("OnShow", function() ... end)
