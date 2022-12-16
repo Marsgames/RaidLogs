@@ -32,13 +32,6 @@ local colors = {
     ["yellow"] = "|cffffff00"
 }
 
--- Load bosses data for current expansion + get player name and realm
--- TODO: Set extension to "Dragonflight" when the first raid of the expansion is released
-local extBosses = db["Extension"]["Dragonflight"]
-local convTable = ns.gnippam
-local playerName = GetUnitName("player")
-local playerRealm = GetRealmName()
-
 -- Ternary function to reduce the number of lines in the code
 -- Maybe who should use something like a quarternary function to reduce the number of lines even more?
 -- Maybe we should use a ToolBox namespace for this?
@@ -51,11 +44,101 @@ local function ternary(condition, ifTrue, ifFalse)
 end
 -- TODO: Create something that looks like a switch/case statement
 
+-- Load bosses data for current expansion + get player name and realm
+-- TODO: Set extension to "Dragonflight" when the first raid of the expansion is released
+local extBosses = db["Extension"]["Dragonflight"]
+local convTable = ns.gnippam
+local playerName = GetUnitName("player")
+local playerRealm = GetRealmName()
+
+local function DifficultyNumberToName(difficulty)
+    return ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
+end
+
+local function SplitDatasForPlayer(name, realm)
+    if (realm == nil) then
+        realm = playerRealm
+    end
+    if (charData[realm] == nil or charData[realm][name] == nil) then
+        return {}
+    end
+
+    local playerDatas = charData[realm][name]
+    local playerTable = {}
+
+    -- new data format = "encounterType:rankPercent:average:killCount/encounterType2:..."
+    local raids = {strsplit("/", playerDatas)}
+
+    for _, boss in pairs(raids) do
+        local splitTable = {strsplit(":", boss)}
+
+        local encounterType = tonumber(splitTable[1])
+        local rank = tonumber(splitTable[2])
+        local killCount = tonumber(splitTable[3])
+        local bossId = convTable[encounterType]["encounter"]
+        local bossDifficulty = convTable[encounterType]["difficulty"]
+        local metric = convTable[encounterType]["metric"]
+
+        if playerTable[bossId] == nil then
+            playerTable[bossId] = {}
+        end
+        playerTable[bossId][bossDifficulty] = {
+            ["metric"] = metric,
+            ["rank"] = rank,
+            ["killCount"] = killCount
+        }
+    end
+
+    return playerTable
+end
+
+local function CalculateAverageForPlayer(name, realm, raid)
+    playerDatas = SplitDatasForPlayer(name, realm)
+    local difficulty = ""
+    local raidName = db.RaidName[raid]
+    local score = 0
+
+    local average = 0
+    local count = 0
+
+    local difficulties = {5, 4, 3}
+    local bossIDs = {}
+    for _, bossID in pairs(db.BossId[raid]) do
+        table.insert(bossIDs, bossID)
+    end
+    for _, diff in pairs(difficulties) do
+        for _, bossID in pairs(bossIDs) do
+            if (playerDatas[bossID] ~= nil and playerDatas[bossID][diff] ~= nil) then
+                average = average + playerDatas[bossID][diff]["rank"]
+                count = count + 1
+            end
+        end
+        if (count > 0) then
+            difficulty = diff
+            score = average / count
+            return difficulty, raidName, score
+        end
+    end
+
+    return difficulty, raidName, score
+end
+
+local function ScoreToColor(score)
+    return ternary(score < 25, colors["grey"], ternary(score < 50, colors["green"], ternary(score < 75, colors["blue"], ternary(score < 95, colors["purple"], ternary(score < 99, colors["orange"], ternary(score < 100, colors.pink, colors["herloom"]))))))
+end
+
+local function DifficultyToColor(difficulty)
+    if (type(difficulty) == "string") then
+        return ternary(difficulty == "M", colors["purple"], ternary(difficulty == "H", colors["blue"], colors["green"]))
+    end
+    return ternary(difficulty == 5, colors["purple"], ternary(difficulty == 4, colors["blue"], colors["green"]))
+end
+
 -- Givent a data set, return a tooltip double line formatted string
 local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
     -- Get color for the rank percentage and difficulty "name"
-    local scoreColor = ternary(datas["rank"] < 25, colors["grey"], ternary(datas["rank"] < 50, colors["green"], ternary(datas["rank"] < 75, colors["blue"], ternary(datas["rank"] < 95, colors["purple"], ternary(datas["rank"] < 99, colors["orange"], ternary(datas["rank"] < 100, colors.pink, colors["herloom"]))))))
-    local diffName = ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
+    local scoreColor = ScoreToColor(datas["rank"])
+    local diffName = DifficultyNumberToName(difficulty)
 
     -- If there is a rank for this difficulty, and the difficulty is higher than the previous tested ones, add a line to the tooltip
     if (difficulty > maxDifficulty and datas["rank"] > 0) then
@@ -139,6 +222,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     end
 end
 
+-- If there is no data for a raid, we show every boss greyed out
 local function ProcessEmptyRaid(raid, frame, addLineBefore)
     local raidName = db.RaidName[raid]
     if (addLineBefore) then
@@ -151,7 +235,9 @@ local function ProcessEmptyRaid(raid, frame, addLineBefore)
     end
 end
 
-local function InitAddon(unitName, unitRealm)
+-- This function shows the tooltip for a player when the PVEFrame is opened.
+-- Whether it is for the player datas or an applier
+local function ProcessPVEFrameTooltip(unitName, unitRealm)
     local frame = WarLogsFrame or CreateFrame("GameTooltip", "WarLogsFrame", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
@@ -208,12 +294,41 @@ local function InitAddon(unitName, unitRealm)
     return frame
 end
 
+-- This function shows average ranking for each raid on player tooltip
+local function ProcessOveringTooltip(mouseoverName)
+    local tooltipFirstLine = _G["GameTooltipTextLeft1"]:GetText()
+    if (tooltipFirstLine == nil) then
+        return
+    end
+    local name, realm = tooltipFirstLine:match("(.+)%-(.+)")
+    if (name and name == mouseoverName) then
+        if (realm == nil) then
+            realm = playerRealm
+        end
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("WarLogs Average Ranking")
+
+        local raidIDs = {31}
+        playerDatas = SplitDatasForPlayer(name, realm)
+        for i = 1, #raidIDs do
+            local raidID = raidIDs[i]
+            local difficulty, raidName, score = CalculateAverageForPlayer(name, realm, raidID)
+
+            if (score > 0) then
+                GameTooltip:AddDoubleLine(DifficultyToColor(difficulty) .. DifficultyNumberToName(difficulty) .. " " .. colors.white .. raidName, ScoreToColor(score) .. score)
+            else
+                GameTooltip:AddDoubleLine(colors.grey .. "- " .. raidName, colors.grey .. "No data")
+            end
+        end
+    end
+end
+
 local pveFrameIsShown = false -- Check weather the PVEFrame is shown or not
 -- When opening the PVEFrame, show the tooltip for the player
 PVEFrame:HookScript(
     "OnShow",
     function()
-        local tt = InitAddon(playerName, playerRealm)
+        local tt = ProcessPVEFrameTooltip(playerName, playerRealm)
         tt:Show()
         pveFrameIsShown = true
     end
@@ -222,7 +337,7 @@ PVEFrame:HookScript(
 PVEFrame:HookScript(
     "OnHide",
     function()
-        local tt = InitAddon(playerName, playerRealm)
+        local tt = ProcessPVEFrameTooltip(playerName, playerRealm)
         tt:Hide()
         pveFrameIsShown = false
     end
@@ -232,9 +347,14 @@ PVEFrame:HookScript(
 -- If it's a player tooltip, we extract player name and realm
 -- Then, we check if the player is in a LFG group (that would mean that this tooltip is for a player applying to a group)
 -- If he is, we check try to show the tooltip for the applying member
+local lastPlayerUpdated = ""
 GameTooltip:HookScript(
     "OnShow",
     function()
+        -- local mouseoverName, source, guid = GameTooltip:GetUnit()
+        -- if (mouseoverName ~= nil and guid:find("Player")) then
+        --     ProcessOveringTooltip(mouseoverName)
+        -- else
         -- TODO: Issue if the realm is the same as the current player
         local name, realm = _G["GameTooltipTextLeft1"]:GetText():match("(.+)%-(.+)")
         if (pveFrameIsShown and (C_LFGList.GetActiveEntryInfo() ~= nil) and (name and realm)) then
@@ -242,7 +362,7 @@ GameTooltip:HookScript(
             if (not containsSpace) then
                 local id = C_LFGList.GetActiveEntryInfo().activityID
                 local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
-                local tt = InitAddon(name, realm)
+                local tt = ProcessPVEFrameTooltip(name, realm)
                 if (name and realm) then
                     tt:Show()
                 else
@@ -250,16 +370,29 @@ GameTooltip:HookScript(
                 end
             end
         end
+        -- end
     end
 )
 GameTooltip:HookScript(
     "OnHide",
     function()
-        local tt = InitAddon(playerName, playerRealm)
+        local tt = ProcessPVEFrameTooltip(playerName, playerRealm)
         if (pveFrameIsShown) then
             tt:Show()
         else
             tt:Hide()
+        end
+        lastPlayerUpdated = ""
+    end
+)
+GameTooltip:HookScript(
+    "OnUpdate",
+    function()
+        local mouseoverName, source, guid = GameTooltip:GetUnit()
+        if (mouseoverName ~= nil and guid:find("Player") and mouseoverName ~= lastPlayerUpdated) then
+            ProcessOveringTooltip(mouseoverName)
+            lastPlayerUpdated = mouseoverName
+            GameTooltip:Show()
         end
     end
 )
@@ -279,7 +412,7 @@ local function OnModifierStateChange(self, event, key, status)
                     if (not containsSpace) then
                         local id = C_LFGList.GetActiveEntryInfo().activityID
                         local difficulty = string.sub(C_LFGList.GetActivityInfoTable(id).shortName, 1, 1)
-                        local tt = InitAddon(name, realm)
+                        local tt = ProcessPVEFrameTooltip(name, realm)
                         if (name and realm) then
                             tt:Show()
                         else
@@ -287,7 +420,7 @@ local function OnModifierStateChange(self, event, key, status)
                         end
                     end
                 else
-                    local tt = InitAddon(playerName, playerRealm)
+                    local tt = ProcessPVEFrameTooltip(playerName, playerRealm)
                     tt:Hide()
                 end
             end
