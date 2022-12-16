@@ -37,4 +37,5 @@ db\WL_raids.lua
 db\WL_DB_Tools.lua
 
 ########## Addon ##########
+WL_Toolbox.lua
 WarLogs.lua

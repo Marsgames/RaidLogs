@@ -6,7 +6,7 @@
 local addonName, ns = ...
 
 local db = ns.db
-local charData = {}
+charData = {}
 
 -- Create public function to populate the db (called from db/WarLogs_DB_XX.lua, but as these files are
 --      enabled with "another addon" they do not have the same namespace as this file)
@@ -32,18 +32,6 @@ local colors = {
     ["yellow"] = "|cffffff00"
 }
 
--- Ternary function to reduce the number of lines in the code
--- Maybe who should use something like a quarternary function to reduce the number of lines even more?
--- Maybe we should use a ToolBox namespace for this?
-local function ternary(condition, ifTrue, ifFalse)
-    if condition then
-        return ifTrue
-    else
-        return ifFalse
-    end
-end
--- TODO: Create something that looks like a switch/case statement
-
 -- Load bosses data for current expansion + get player name and realm
 -- TODO: Set extension to "Dragonflight" when the first raid of the expansion is released
 local extBosses = db["Extension"]["Dragonflight"]
@@ -51,99 +39,16 @@ local convTable = ns.gnippam
 local playerName = GetUnitName("player")
 local playerRealm = GetRealmName()
 
-local function DifficultyNumberToName(difficulty)
-    return ternary(difficulty == 5, "M", ternary(difficulty == 4, "H", "N"))
-end
-
-local function SplitDatasForPlayer(name, realm)
-    if (realm == nil) then
-        realm = playerRealm
-    end
-    if (charData[realm] == nil or charData[realm][name] == nil) then
-        return {}
-    end
-
-    local playerDatas = charData[realm][name]
-    local playerTable = {}
-
-    -- new data format = "encounterType:rankPercent:average:killCount/encounterType2:..."
-    local raids = {strsplit("/", playerDatas)}
-
-    for _, boss in pairs(raids) do
-        local splitTable = {strsplit(":", boss)}
-
-        local encounterType = tonumber(splitTable[1])
-        local rank = tonumber(splitTable[2])
-        local killCount = tonumber(splitTable[3])
-        local bossId = convTable[encounterType]["encounter"]
-        local bossDifficulty = convTable[encounterType]["difficulty"]
-        local metric = convTable[encounterType]["metric"]
-
-        if playerTable[bossId] == nil then
-            playerTable[bossId] = {}
-        end
-        playerTable[bossId][bossDifficulty] = {
-            ["metric"] = metric,
-            ["rank"] = rank,
-            ["killCount"] = killCount
-        }
-    end
-
-    return playerTable
-end
-
-local function CalculateAverageForPlayer(name, realm, raid)
-    playerDatas = SplitDatasForPlayer(name, realm)
-    local difficulty = ""
-    local raidName = db.RaidName[raid]
-    local score = 0
-
-    local average = 0
-    local count = 0
-
-    local difficulties = {5, 4, 3}
-    local bossIDs = {}
-    for _, bossID in pairs(db.BossId[raid]) do
-        table.insert(bossIDs, bossID)
-    end
-    for _, diff in pairs(difficulties) do
-        for _, bossID in pairs(bossIDs) do
-            if (playerDatas[bossID] ~= nil and playerDatas[bossID][diff] ~= nil) then
-                average = average + playerDatas[bossID][diff]["rank"]
-                count = count + 1
-            end
-        end
-        if (count > 0) then
-            difficulty = diff
-            score = average / count
-            return difficulty, raidName, score
-        end
-    end
-
-    return difficulty, raidName, score
-end
-
-local function ScoreToColor(score)
-    return ternary(score < 25, colors["grey"], ternary(score < 50, colors["green"], ternary(score < 75, colors["blue"], ternary(score < 95, colors["purple"], ternary(score < 99, colors["orange"], ternary(score < 100, colors.pink, colors["herloom"]))))))
-end
-
-local function DifficultyToColor(difficulty)
-    if (type(difficulty) == "string") then
-        return ternary(difficulty == "M", colors["purple"], ternary(difficulty == "H", colors["blue"], colors["green"]))
-    end
-    return ternary(difficulty == 5, colors["purple"], ternary(difficulty == 4, colors["blue"], colors["green"]))
-end
-
 -- Givent a data set, return a tooltip double line formatted string
 local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
     -- Get color for the rank percentage and difficulty "name"
-    local scoreColor = ScoreToColor(datas["rank"])
-    local diffName = DifficultyNumberToName(difficulty)
+    local scoreColor = WLToolbox:ScoreToColor(datas["rank"])
+    local diffName = WLToolbox:DifficultyNumberToName(difficulty)
 
     -- If there is a rank for this difficulty, and the difficulty is higher than the previous tested ones, add a line to the tooltip
     if (difficulty > maxDifficulty and datas["rank"] > 0) then
         maxDifficulty = difficulty
-        local diffColor = ternary(diffName == "N", colors["green"], ternary(diffName == "H", colors["blue"], colors["purple"]))
+        local diffColor = WLToolbox:Ternary(diffName == "N", colors["green"], WLToolbox:Ternary(diffName == "H", colors["blue"], colors["purple"]))
         lineLeft = diffColor .. diffName .. " " .. colors["white"] .. bossName
         lineRight = scoreColor .. datas["rank"] .. "%"
     end
@@ -153,31 +58,8 @@ end
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
     local playerDatas = charData[unitRealm][unitName]
-    local playerTable = {}
-    local metric = ""
-
-    -- new data format = "encounterType:rankPercent:average:killCount/encounterType2:..."
-    local raids = {strsplit("/", playerDatas)}
-
-    for _, boss in pairs(raids) do
-        local splitTable = {strsplit(":", boss)}
-
-        local encounterType = tonumber(splitTable[1])
-        local rank = tonumber(splitTable[2])
-        local killCount = tonumber(splitTable[3])
-        local bossId = convTable[encounterType]["encounter"]
-        local bossDifficulty = convTable[encounterType]["difficulty"]
-        metric = convTable[encounterType]["metric"]
-
-        if playerTable[bossId] == nil then
-            playerTable[bossId] = {}
-        end
-        playerTable[bossId][bossDifficulty] = {
-            ["metric"] = metric,
-            ["rank"] = rank,
-            ["killCount"] = killCount
-        }
-    end
+    local playerTable = WLToolbox:SplitDatasForPlayer(name, realm)
+    local metric = playerTable["metric"]
 
     if (addLineBefore) then
         frame:AddLine(" ")
@@ -186,7 +68,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     --local TankIcon = "|A:4259:19:19|a" -- Should not appear
     local HealerIcon = "|A:4258:19:19|a"
     local DPSIcon = "|A:4257:19:19|a"
-    frame:AddDoubleLine(raidName, ternary(metric == "dps", DPSIcon, ternary(metric == "hps", HealerIcon, "")))
+    frame:AddDoubleLine(raidName, WLToolbox:Ternary(metric == "dps", DPSIcon, WLToolbox:Ternary(metric == "hps", HealerIcon, "")))
 
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
@@ -309,13 +191,13 @@ local function ProcessOveringTooltip(mouseoverName)
         GameTooltip:AddLine("WarLogs Average Ranking")
 
         local raidIDs = {31}
-        playerDatas = SplitDatasForPlayer(name, realm)
+        playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
         for i = 1, #raidIDs do
             local raidID = raidIDs[i]
-            local difficulty, raidName, score = CalculateAverageForPlayer(name, realm, raidID)
+            local difficulty, raidName, score = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
 
             if (score > 0) then
-                GameTooltip:AddDoubleLine(DifficultyToColor(difficulty) .. DifficultyNumberToName(difficulty) .. " " .. colors.white .. raidName, ScoreToColor(score) .. score)
+                GameTooltip:AddDoubleLine(WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyNumberToName(difficulty) .. " " .. colors.white .. raidName, WLToolbox:ScoreToColor(score) .. score)
             else
                 GameTooltip:AddDoubleLine(colors.grey .. "- " .. raidName, colors.grey .. "No data")
             end
