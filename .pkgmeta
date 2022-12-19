@@ -8,9 +8,6 @@ move-folders:
     WarLogs/db/WarLogs_DB_TW: WarLogs_DB_TW
     WarLogs/db/WarLogs_DB_US: WarLogs_DB_US
 
-plain-copy:
-    - db/WL_*.lua
-
 ignore:
  - README.md
  - scripts
