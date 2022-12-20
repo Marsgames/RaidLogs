@@ -260,8 +260,12 @@ GameTooltip:HookScript(
         local mouseoverName, source, guid = GameTooltip:GetUnit()
         if (mouseoverName ~= nil and guid:find("Player") and mouseoverName ~= lastPlayerUpdated) then
             ProcessOveringTooltip(mouseoverName)
-            lastPlayerUpdated = mouseoverName
             GameTooltip:Show()
+        end
+        if (mouseoverName) then
+            lastPlayerUpdated = mouseoverName
+        else
+            lastPlayerUpdated = ""
         end
     end
 )
