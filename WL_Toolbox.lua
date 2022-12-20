@@ -93,7 +93,9 @@ function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
         if (count > 0) then
             difficulty = diff
             score = average / count
-            metric = playerDatas[bossIDs[1]][diff]["metric"]
+            if (bossIDs[1] and playerDatas[bossIDs[1]] and playerDatas[bossIDs[1]][diff] and playerDatas[bossIDs[1]][diff]["metric"]) then
+                metric = playerDatas[bossIDs[1]][diff]["metric"]
+            end
             return difficulty, raidName, score
         end
     end
