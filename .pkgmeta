@@ -1,4 +1,4 @@
-package-as: WarLogs @project-version@
+package-as: WarLogs
 enable-nolib-creation: no
 
 move-folders:
