@@ -33,8 +33,25 @@ local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficult
     return lineLeft, lineRight, maxDifficulty
 end
 
+-- If there is no data for a raid, we show every boss greyed out
+local function ProcessEmptyRaid(raid, frame, addLineBefore)
+    local raidName = db.RaidName[raid]
+    if (addLineBefore) then
+        frame:AddLine(" ")
+    end
+    frame:AddDoubleLine(raidName, WLToolbox.colors.grey .. "No data")
+    for i = 0, #extBosses[raid] do
+        local bossName = extBosses[raid][i]
+        frame:AddDoubleLine(WLToolbox.colors.grey .. "-  " .. bossName, "")
+    end
+end
+
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
+    if (not charData[unitRealm]) or (not charData[unitRealm][unitName]) then
+        ProcessEmptyRaid(raid, frame, addLineBefore)
+        return
+    end
     local playerDatas = charData[unitRealm][unitName]
     local playerTable = WLToolbox:SplitDatasForPlayer(name, realm)
     local metric = playerTable["metric"]
@@ -77,19 +94,6 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         else
             frame:AddDoubleLine(lineLeft, lineRight)
         end
-    end
-end
-
--- If there is no data for a raid, we show every boss greyed out
-local function ProcessEmptyRaid(raid, frame, addLineBefore)
-    local raidName = db.RaidName[raid]
-    if (addLineBefore) then
-        frame:AddLine(" ")
-    end
-    frame:AddDoubleLine(raidName, WLToolbox.colors.grey .. "No data")
-    for i = 0, #extBosses[raid] do
-        local bossName = extBosses[raid][i]
-        frame:AddDoubleLine(WLToolbox.colors.grey .. "-  " .. bossName, "")
     end
 end
 
@@ -139,13 +143,9 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
         if (not IsAltKeyDown()) and not (englishName == nil) then
             ProcessRaid(raidID, frame, unitRealm, unitName, false)
         else
-            -- ProcessRaid(28, frame, unitRealm, unitName, true)
-            -- ProcessRaid(26, frame, unitRealm, unitName, true)
             ProcessRaid(31, frame, unitRealm, unitName)
         end
     else
-        -- ProcessRaid(28, frame, unitRealm, unitName, true)
-        -- ProcessRaid(26, frame, unitRealm, unitName, true)
         ProcessRaid(31, frame, unitRealm, unitName)
     end
 
@@ -249,6 +249,7 @@ GameTooltip:HookScript(
     end
 )
 
+--- When the player is overing a unit, add average ranking to the tooltip
 local function OnTooltipSetUnit(tooltip, data)
     if (data.guid:find("Player") == nil) then
         return
@@ -265,6 +266,31 @@ local function OnTooltipSetUnit(tooltip, data)
     ProcessOveringTooltip(name, realm)
 end
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, OnTooltipSetUnit)
+---
+
+--- Show different datas ong LFGList for raid or for other activities
+local function OnLFGListTooltip(gametooltip, resultID)
+    local entry = C_LFGList.GetSearchResultInfo(resultID)
+    if (not entry) or (not entry.leaderName) then
+        return
+    end
+    local name, realm = entry.leaderName:match("(.+)%-(.+)")
+    if (name == nil) then
+        name = playerName
+    end
+    if (realm == nil) then
+        realm = playerRealm
+    end
+
+    vaultIDs = {1189, 1190, 1191}
+    if (WLToolbox:Contains(vaultIDs, entry.activityID)) then
+        ProcessRaid(31, gametooltip, name, realm, true)
+    else
+        ProcessOveringTooltip(name, realm)
+    end
+end
+hooksecurefunc("LFGListUtil_SetSearchEntryTooltip", OnLFGListTooltip)
+---
 
 -- Update the tooltip if the player use LALT modifier
 -- It's a big fat ugly copy/paste of the GameTooltip:HookScript("OnShow", function() ... end)
@@ -305,16 +331,16 @@ f:SetScript("OnEvent", OnModifierStateChange)
 -- THIS IS somehow HOW RAIDER.IO IS DOING "only applyant" TOOLTIP PROCESSING
 --[[
 local ScrollBoxUtil do
-   
+
    ScrollBoxUtil = {}
-   
+
    ---@class CallbackRegistryMixin
    ---@field public RegisterCallback fun(event: string, callback: fun())
-   
+
    ---@class ScrollBoxBaseMixin : CallbackRegistryMixin
    ---@field public GetFrames fun(): Frame[]
    ---@field public Update fun()
-   
+
    ---@param scrollBox ScrollBoxBaseMixin
    ---@param callback fun(frames: Button[], scrollBox: ScrollBoxBaseMixin)
    function ScrollBoxUtil:OnViewFramesChanged(scrollBox, callback)
@@ -338,7 +364,7 @@ local ScrollBoxUtil do
       end
       return false
    end
-   
+
    ---@param scrollBox ScrollBoxBaseMixin
    ---@param callback fun(self: ScrollBoxBaseMixin)
    function ScrollBoxUtil:OnViewScrollChanged(scrollBox, callback)
@@ -358,15 +384,15 @@ local ScrollBoxUtil do
       end
       return false
    end
-   
+
 end
 
 local HookUtil do
-   
+
    HookUtil = {}
-   
+
    local hooked = {}
-   
+
    ---@param frame Frame
    ---@param callback fun(self: Frame, ...)
    ---@param ... string
@@ -388,7 +414,7 @@ local HookUtil do
          end
       end
    end
-   
+
    ---@param frames Frame[]
    ---@param callback fun(self: Frame, ...)
    ---@param ... string
@@ -397,7 +423,7 @@ local HookUtil do
          HookUtil:On(frame, callback, ...)
       end
    end
-   
+
    ---@param object Frame[]|Frame
    ---@param map table<string, fun()>
    function HookUtil:MapOn(object, map)
@@ -415,7 +441,7 @@ local HookUtil do
       end
       return true
    end
-   
+
 end
 
 local function OnScroll()
@@ -424,7 +450,7 @@ end
 local function OnEnter(self)
    local applicantID = self.applicantID
    local infos = C_LFGList.GetApplicantMemberInfo(applicantID, 1)
-   
+
    print(infos)
 end
 local function OnLeave()
