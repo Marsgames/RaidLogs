@@ -6,6 +6,7 @@ from pymongo import MongoClient
 git_repo_url = "https://Marsgames:{0}@github.com/Marsgames/WarLogs.git"
 git_repo_path = "/tmp/WarLogs"
 wow_regions = ["EU", "CN", "KR", "TW", "US"]
+nbPlayers = 0
 
 mapping = []
 
@@ -41,6 +42,22 @@ def clone_git_repo():
         os.system(
             f"git clone {git_repo_url.format(os.environ['GIT_TOKEN'])} {git_repo_path}"
         )
+
+
+def update_toc():
+    # Open WarLogs.toc to update a line
+    major, minor, patch = "X", "X", "X"
+    with open(f"{git_repo_path}/WarLogs.toc", "r") as toc_file:
+        lines = toc_file.readlines()
+        for i, line in enumerate(lines):
+            if line.startswith("## Version"):
+                actual_version = line.split(" ")[2]
+                major, minor, patch = actual_version.split(".")
+                patch = int(patch) + 1
+                lines[i] = f"## Version: {major}.{minor}.{patch}\n"
+    with open(f"{git_repo_path}/WarLogs.toc", "w") as toc_file:
+        toc_file.writelines(lines)
+    return f"{major}.{minor}.{patch}"
 
 
 def dump_lua(data):
@@ -101,6 +118,7 @@ def generate_db(db, region):
             tmp_db = {server: {}}
             players = get_players(db, region, server)
             for player in players:
+                nbPlayers += 1
                 tmp_db[server][player["name"]] = transform_player_data_ugly(player)
             print(f"Found {len(tmp_db[server])} players on {region}-{server}")
             lines.append(f"WarLogsAddCharsToDB({dump_lua(tmp_db)})\n")
@@ -130,14 +148,20 @@ def generate_reverse_mapping():
 
 def commit():
     print(f"Commiting new db...")
+    version = update_toc()
     os.system(
-        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' && git push"
+        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB\n{nbPlayers} are in the database' && git push"
     )
+    os.system(f"cd {git_repo_path} && git tag {version} && git push --tags")
+    # Creating a release on github requires "gh" cli, but I'm not sure it's installed on lambda so flemme
+    # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "WarLogs {version}")')
 
 
 def lambda_handler(event, ctx):
     global mapping
+    global nbPlayers
     mapping = []
+    nbPlayers = 0
 
     clone_git_repo()
     db = get_mongo_db()
