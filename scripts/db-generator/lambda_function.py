@@ -111,6 +111,7 @@ def transform_player_data_ugly(player):
 
 
 def generate_db(db, region):
+    global nbPlayers
     with open(f"{git_repo_path}/db/WL_DB_{region}.lua", "w") as db_file:
         region_servers = db.players.distinct("server", {"region": region})
         lines = []
@@ -147,6 +148,7 @@ def generate_reverse_mapping():
 
 
 def commit():
+    global nbPlayers
     print(f"Commiting new db...")
     version = update_toc()
     os.system(
