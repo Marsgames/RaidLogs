@@ -331,16 +331,16 @@ f:SetScript("OnEvent", OnModifierStateChange)
 -- THIS IS somehow HOW RAIDER.IO IS DOING "only applyant" TOOLTIP PROCESSING
 --[[
 local ScrollBoxUtil do
-   
+
    ScrollBoxUtil = {}
-   
+
    ---@class CallbackRegistryMixin
    ---@field public RegisterCallback fun(event: string, callback: fun())
-   
+
    ---@class ScrollBoxBaseMixin : CallbackRegistryMixin
    ---@field public GetFrames fun(): Frame[]
    ---@field public Update fun()
-   
+
    ---@param scrollBox ScrollBoxBaseMixin
    ---@param callback fun(frames: Button[], scrollBox: ScrollBoxBaseMixin)
    function ScrollBoxUtil:OnViewFramesChanged(scrollBox, callback)
@@ -364,7 +364,7 @@ local ScrollBoxUtil do
       end
       return false
    end
-   
+
    ---@param scrollBox ScrollBoxBaseMixin
    ---@param callback fun(self: ScrollBoxBaseMixin)
    function ScrollBoxUtil:OnViewScrollChanged(scrollBox, callback)
@@ -384,15 +384,15 @@ local ScrollBoxUtil do
       end
       return false
    end
-   
+
 end
 
 local HookUtil do
-   
+
    HookUtil = {}
-   
+
    local hooked = {}
-   
+
    ---@param frame Frame
    ---@param callback fun(self: Frame, ...)
    ---@param ... string
@@ -414,7 +414,7 @@ local HookUtil do
          end
       end
    end
-   
+
    ---@param frames Frame[]
    ---@param callback fun(self: Frame, ...)
    ---@param ... string
@@ -423,7 +423,7 @@ local HookUtil do
          HookUtil:On(frame, callback, ...)
       end
    end
-   
+
    ---@param object Frame[]|Frame
    ---@param map table<string, fun()>
    function HookUtil:MapOn(object, map)
@@ -441,7 +441,7 @@ local HookUtil do
       end
       return true
    end
-   
+
 end
 
 local function OnScroll()
@@ -450,7 +450,7 @@ end
 local function OnEnter(self)
    local applicantID = self.applicantID
    local infos = C_LFGList.GetApplicantMemberInfo(applicantID, 1)
-   
+
    print(infos)
 end
 local function OnLeave()
