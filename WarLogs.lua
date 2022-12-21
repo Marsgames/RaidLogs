@@ -160,34 +160,28 @@ end
         H Vault of the Incarnates   hps 69%
         M Tomb of Sargeras          dps 99%
     ]]
-local function ProcessOveringTooltip(mouseoverName)
+local function ProcessOveringTooltip(name, realm)
     local tooltipFirstLine = _G["GameTooltipTextLeft1"]:GetText()
     if (tooltipFirstLine == nil) then
         return
     end
-    local name, realm = tooltipFirstLine:match("(.+)%-(.+)")
-    if (name and name == mouseoverName) then
-        if (realm == nil) then
-            realm = playerRealm
-        end
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("WarLogs Average Ranking")
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("WarLogs Average Ranking")
 
-        local raidIDs = {31}
-        playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
-        for i = 1, #raidIDs do
-            local raidID = raidIDs[i]
-            local difficulty, raidName, score, metric = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
+    local raidIDs = {31}
+    playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
+    for i = 1, #raidIDs do
+        local raidID = raidIDs[i]
+        local difficulty, raidName, score, metric = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
 
-            if (score > 0) then
-                local difficulty = (WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyToName(difficulty))
-                local raidName = (WLToolbox.colors.white .. raidName)
-                local score = (WLToolbox:ScoreToColor(score) .. score .. "%")
-                local metricIcon = WLToolbox:MetricToIcon(metric)
-                GameTooltip:AddDoubleLine(difficulty .. " " .. raidName, metricIcon .. " " .. score)
-            else
-                GameTooltip:AddDoubleLine(WLToolbox.colors.grey .. "- " .. raidName, WLToolbox.colors.grey .. "No data")
-            end
+        if (score > 0) then
+            local difficulty = (WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyToName(difficulty))
+            local raidName = (WLToolbox.colors.white .. raidName)
+            local score = (WLToolbox:ScoreToColor(score) .. score .. "%")
+            local metricIcon = WLToolbox:MetricToIcon(metric)
+            GameTooltip:AddDoubleLine(difficulty .. " " .. raidName, metricIcon .. " " .. score)
+        else
+            GameTooltip:AddDoubleLine(WLToolbox.colors.grey .. "- " .. raidName, WLToolbox.colors.grey .. "No data")
         end
     end
 end
@@ -254,21 +248,23 @@ GameTooltip:HookScript(
         lastPlayerUpdated = ""
     end
 )
-GameTooltip:HookScript(
-    "OnUpdate",
-    function()
-        local mouseoverName, source, guid = GameTooltip:GetUnit()
-        if (mouseoverName ~= nil and guid:find("Player") and mouseoverName ~= lastPlayerUpdated) then
-            ProcessOveringTooltip(mouseoverName)
-            GameTooltip:Show()
-        end
-        if (mouseoverName) then
-            lastPlayerUpdated = mouseoverName
-        else
-            lastPlayerUpdated = ""
-        end
+
+local function OnTooltipSetUnit(tooltip, data)
+    if (data.guid:find("Player") == nil) then
+        return
     end
-)
+    local firstLine = data.lines[1].leftText
+    local name, realm = firstLine:match("(.+)%-(.+)")
+    if (name == nil) then
+        name = playerName
+    end
+    if (realm == nil) then
+        realm = playerRealm
+    end
+
+    ProcessOveringTooltip(name, realm)
+end
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, OnTooltipSetUnit)
 
 -- Update the tooltip if the player use LALT modifier
 -- It's a big fat ugly copy/paste of the GameTooltip:HookScript("OnShow", function() ... end)
