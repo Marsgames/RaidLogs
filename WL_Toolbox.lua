@@ -104,6 +104,7 @@ function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
 end
 
 function WLToolbox:ScoreToColor(score)
+    score = tonumber(score)
     return WLToolbox:Ternary(score < 25, WLToolbox.colors["grey"], WLToolbox:Ternary(score < 50, WLToolbox.colors["green"], WLToolbox:Ternary(score < 75, WLToolbox.colors["blue"], WLToolbox:Ternary(score < 95, WLToolbox.colors["purple"], WLToolbox:Ternary(score < 99, WLToolbox.colors.orange, WLToolbox:Ternary(score < 100, WLToolbox.colors.pink, WLToolbox.colors.herloom))))))
 end
 

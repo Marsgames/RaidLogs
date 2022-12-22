@@ -177,6 +177,7 @@ local function ProcessOveringTooltip(name, realm)
         if (score > 0) then
             local difficulty = (WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyToName(difficulty))
             local raidName = (WLToolbox.colors.white .. raidName)
+            score = string.sub(score, 1, 4)
             local score = (WLToolbox:ScoreToColor(score) .. score .. "%")
             local metricIcon = WLToolbox:MetricToIcon(metric)
             GameTooltip:AddDoubleLine(difficulty .. " " .. raidName, metricIcon .. " " .. score)
