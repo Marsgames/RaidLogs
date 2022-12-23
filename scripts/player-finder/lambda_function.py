@@ -90,7 +90,7 @@ def connect_mongo():
 
     client = MongoClient(
         f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@149.202.45.54:{MONGO_PORT}/?authMechanism=DEFAULT",
-        serverSelectionTimeoutMS=2500
+        serverSelectionTimeoutMS=2500,
     )
     try:
         # The ping command is cheap and does not require auth.
@@ -233,6 +233,4 @@ def lambda_handler(event, ctx):
         upsert_players(players)
         drop_reports(lte_timestamp)
 
-        return {
-            'statusCode': 200
-        }
+        return {"statusCode": 200}
