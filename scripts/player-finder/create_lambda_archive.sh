@@ -9,3 +9,4 @@ cp $GIT_SCRAPPER_PATH/lambda_function.py $VENV_PATH
 pushd $VENV_PATH 
 zip -r9 $GIT_SCRAPPER_PATH/lambda_package.zip *
 popd
+aws lambda update-function-code --function-name WCLPlayerDiscover --region us-east-1 --zip-file fileb://lambda_package.zip

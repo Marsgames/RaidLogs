@@ -21,124 +21,9 @@ wcl_api_keys = {
         "key": "OTdiOWVmODMtOTgwZi00ZTc0LTk1NDktZjNjN2E0MTk0NmU1OlJNem9jeHJOS2RhSmZpSkd2OXZjYVU2WkcwZjNTNjJCcE1rOE9Ueko=",
         "token": None,
         "isExhausted": False
-    },
-    "wltemp1" : {
-        "key": "OTdkMDlmZWYtOTViNC00ZjBkLTlkOTUtYzQ4NWUxNDg0NjNlOlQzSzlIRWJzYkJWcHVsbDNVdFA0ak9HWFhQZ1dOTWh6ckpPY0NvNmE=",
-        "token": None,
-        "isExhausted": False
-    },
-    "wltemp2" : {
-        "key": "OTdkMGEzZDEtNDVlZC00MGY3LWI4YWUtYmM4NGM2MDc4ZmNmOlRMWEswYmdiUlhCUWFQYVhYUkIxZVFOSkJjT2hmbUFQVk9JdlJkaHc=",
-        "token": None,
-        "isExhausted": False
-    },
-    "wltemp3" : {
-        "key": "OTdkMGE1ZjMtMWM1YS00ZjQ0LTkwMGMtMDVhOGU2YjI1YWE1OnRZV05yd2cwdEpWb0xUQXZmVUI1Y0paN3hWT0tIYmlRY0JuS1B5S2g=",
-        "token": None,
-        "isExhausted": False
-    },
-    "wltemp4" : {
-        "key": "OTdkMGE5N2MtZjA3ZS00YzNlLTlhNDYtNzllZTU2NGIzOGI4OkJzanlmdEExWlJwWEI3aTdUYlpkVllhR0dlcll1dExGZ3JZRVllWEk=",
-        "token": None,
-        "isExhausted": False
     }
 }
 wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
-wcl_alias_to_encounter_mapping = {
-    "Shriekwing_N" : 2398,
-    "Huntsman_Altimor_N" : 2418,
-    "Hungering_Destroyer_N" : 2383,
-    "Sun_King__s_Salvation_N" : 2402,
-    "Artificer_Xy__Mox_N" : 2405,
-    "Lady_Inerva_Darkvein_N" : 2406,
-    "The_Council_of_Blood_N" : 2412,
-    "Sludgefist_N" : 2399,
-    "Stone_Legion_Generals_N" : 2417,
-    "Sire_Denathrius_N" : 2407,
-    "Shriekwing_H" : 2398,
-    "Huntsman_Altimor_H" : 2418,
-    "Hungering_Destroyer_H" : 2383,
-    "Sun_King__s_Salvation_H" : 2402,
-    "Artificer_Xy__Mox_H" : 2405,
-    "Lady_Inerva_Darkvein_H" : 2406,
-    "The_Council_of_Blood_H" : 2412,
-    "Sludgefist_H" : 2399,
-    "Stone_Legion_Generals_H" : 2417,
-    "Sire_Denathrius_H" : 2407,
-    "Shriekwing_M" : 2398,
-    "Huntsman_Altimor_M" : 2418,
-    "Hungering_Destroyer_M" : 2383,
-    "Sun_King__s_Salvation_M" : 2402,
-    "Artificer_Xy__Mox_M" : 2405,
-    "Lady_Inerva_Darkvein_M" : 2406,
-    "The_Council_of_Blood_M" : 2412,
-    "Sludgefist_M" : 2399,
-    "Stone_Legion_Generals_M" : 2417,
-    "Sire_Denathrius_M" : 2407,
-    "The_Tarragrue_N" : 2423,
-    "The_Tarragrue_H" : 2423,
-    "The_Tarragrue_M" : 2423,
-    "The_Eye_of_the_Jailer_N" : 2433,
-    "The_Eye_of_the_Jailer_H" : 2433,
-    "The_Eye_of_the_Jailer_M" : 2433,
-    "The_Nine_N" : 2429,
-    "The_Nine_H" : 2429,
-    "The_Nine_M" : 2429,
-    "Remnant_of_Ner__zhul_N" : 2432,
-    "Remnant_of_Ner__zhul_H" : 2432,
-    "Remnant_of_Ner__zhul_M" : 2432,
-    "Soulrender_Dormazain_N" : 2434,
-    "Soulrender_Dormazain_H" : 2434,
-    "Soulrender_Dormazain_M" : 2434,
-    "Painsmith_Raznal_N" : 2430,
-    "Painsmith_Raznal_H" : 2430,
-    "Painsmith_Raznal_M" : 2430,
-    "Guardian_of_the_First_Ones_N" : 2436,
-    "Guardian_of_the_First_Ones_H" : 2436,
-    "Guardian_of_the_First_Ones_M" : 2436,
-    "Fatescribe_Roh____Kalo_N" : 2431,
-    "Fatescribe_Roh____Kalo_H" : 2431,
-    "Fatescribe_Roh____Kalo_M" : 2431,
-    "Kel__Thuzad_N" : 2422,
-    "Kel__Thuzad_H" : 2422,
-    "Kel__Thuzad_M" : 2422,
-    "Sylvnas_Windrunner_N" : 2435,
-    "Sylvnas_Windrunner_H" : 2435,
-    "Sylvnas_Windrunner_M" : 2435,
-    "Vigilant_Guardian_N" : 2512,
-    "Vigilant_Guardian_H" : 2512,
-    "Vigilant_Guardian_M" : 2512,
-    "Dausegne____The_Fallen_Oracle_N" : 2540,
-    "Dausegne____The_Fallen_Oracle_H" : 2540,
-    "Dausegne____The_Fallen_Oracle_M" : 2540,
-    "Artificer_Xy__Mox_ComeBack_N" : 2553,
-    "Artificer_Xy__Mox_ComeBack_H" : 2553,
-    "Artificer_Xy__Mox_ComeBack_M" : 2553,
-    "Prototype_Pantheon_N" : 2544,
-    "Prototype_Pantheon_H" : 2544,
-    "Prototype_Pantheon_M" : 2544,
-    "Skolex____the_Insatiable_Ravener_N" : 2542,
-    "Skolex____the_Insatiable_Ravener_H" : 2542,
-    "Skolex____the_Insatiable_Ravener_M" : 2542,
-    "Halondrus_the_Reclaimer_N" : 2529,
-    "Halondrus_the_Reclaimer_H" : 2529,
-    "Halondrus_the_Reclaimer_M" : 2529,
-    "Lihuvim____Principal_Architect_N" : 2539,
-    "Lihuvim____Principal_Architect_H" : 2539,
-    "Lihuvim____Principal_Architect_M" : 2539,
-    "Anduin_Wrynn_N" : 2546,
-    "Anduin_Wrynn_H" : 2546,
-    "Anduin_Wrynn_M" : 2546,
-    "Lords_of_Dread_N" : 2543,
-    "Lords_of_Dread_H" : 2543,
-    "Lords_of_Dread_M" : 2543,
-    "Rygelon_N" : 2549,
-    "Rygelon_H" : 2549,
-    "Rygelon_M" : 2549,
-    "The_Jailer_N" : 2537,
-    "The_Jailer_H" : 2537,
-    "The_Jailer_M" : 2537
-}
 wcl_query_template = "{{\"query\": \"query {{  \
     characterData {{ \
         character(id: {}) {{  \
@@ -249,6 +134,10 @@ class InvalidPlayerDataFormat(Exception):
     """Unknown player data format sent from the API"""
     pass
 
+class BadGateway(Exception):
+    """Bad Gateway Error received from website, aborting this run"""
+    pass
+
 def connect_mongo():
     global mongo_client
     MONGO_USER = os.environ['MONGO_USER']
@@ -292,6 +181,8 @@ def get_auth_token(apiKeyName, retry=False):
         print(f"[WARN] Auth failed because rate limit reached, sleeping... ({response.status_code}) : {response.headers}")
         time.sleep(int(response.headers["retry-after"]) + 1)
         return get_auth_token(apiKeyName, retry=True)
+    elif not response.ok and response.status_code == 502:
+        raise BadGateway
     else:
         print(f"[ERROR] Auth failed for unknown reason (Code : {response.status_code}, IsRetry : {retry})\n\t{response.headers}\n\t{response.text}")
         abort_container_run()
@@ -344,9 +235,6 @@ def get_players_stats_for_player(msg, apiKeyName, players, msgId):
     return True, None
 
 def upsert_players(players):
-    if len(players) == 0:
-        return
-    
     print(f"Saving {len(players)} players to MongoDB...")
 
     requests = []
@@ -361,6 +249,10 @@ def upsert_players(players):
         requests.append(
             UpdateOne({"_id": int(player.id)}, {"$set": set}, upsert=True)
         )
+    
+    if len(requests) == 0:
+        print("Nothing to add in mongo")
+        return
     
     res = mongo_client.players.bulk_write(requests, ordered=False)
     print(res.bulk_api_result)
@@ -396,8 +288,13 @@ def get_remaining_wcl_points(apiKeyName):
         print(f"[WARN] Unable to get remaining budget for this key assuming budget exhausted")
         set_api_key_exhausted(apiKeyName)
         return { "remaining" : 0, "resetIn": 3600}
+    elif not response.ok and response.status_code == 502:
+        raise BadGateway
     elif not response.ok:
         print(f"[ERROR] Unable to get remaining budget for unknown reasons")
+        print(response.status_code)
+        print(response.headers)
+        print(response.text)
         abort_container_run()
     
     data = response.json()

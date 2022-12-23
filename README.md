@@ -1,5 +1,6 @@
 ############## Package Lambda Func #############
-1. pip install pipenv
+1. aws configure
+2. pip install pipenv
 2. cd /path/to/lambda/folder && pipenv install #This will create a pipenv with dependencies for this lambda using the Pipfile
 3. In each lambda folder, there is a `create_lambda_archive.sh` file, replace `VENV_PATH` with path printed at step 3 and GIT_SCRAPPER_PATH with the path to the lambda folder
 
