@@ -140,18 +140,16 @@ def get_reports_players(reports, apiKeyName):
         print(f"[ERROR] Unable to get reports data (Code : {response.status_code})\n\t{response.text}")
         raise UnknownError
 
-    try:
-        players = {}
-        for report in response.json()["data"]["reportData"].values():
-            difficulties = [*set([fight["difficulty"] for fight in report["fights"] if fight["difficulty"] is not None])]
-            for player in report["rankedCharacters"]:
-                if player["canonicalID"] not in players:
-                    players[player["canonicalID"]] = {}
 
-                players[player["canonicalID"]][report["zone"]["id"]] = difficulties
-                
-    except Exception as e:
-        print(f"[WARN] Invalid report data payload (Code : {response.status_code}, Error : {e})\n\t{response.text}")
+    players = {}
+    for report in response.json()["data"]["reportData"].values():
+        if report["rankedCharacters"] is None:
+            continue
+        difficulties = [*set([fight["difficulty"] for fight in report["fights"] if fight["difficulty"] is not None])]
+        for player in report["rankedCharacters"]:
+            if player["canonicalID"] not in players:
+                players[player["canonicalID"]] = {}
+            players[player["canonicalID"]][report["zone"]["id"]] = difficulties
     
     return players
 
