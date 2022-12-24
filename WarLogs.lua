@@ -52,8 +52,8 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
         ProcessEmptyRaid(raid, frame, addLineBefore)
         return
     end
-    local playerDatas = charData[unitRealm][unitName]
-    local playerTable = WLToolbox:SplitDatasForPlayer(name, realm)
+    -- local playerDatas = charData[unitRealm][unitName]
+    local playerTable = WLToolbox:SplitDatasForPlayer(unitName, unitRealm)
     local metric = playerTable["metric"]
 
     if (addLineBefore) then
@@ -255,14 +255,13 @@ local function OnTooltipSetUnit(tooltip, data)
     if (data.guid:find("Player") == nil) then
         return
     end
+    local name = tooltip:GetUnit()
     local firstLine = data.lines[1].leftText
-    local name, realm = firstLine:match("(.+)%-(.+)")
-    if (name == nil) then
-        name = playerName
+    -- if there is no "-" in the first line, we add it
+    if (firstLine:find("-") == nil) then
+        firstLine = firstLine .. "-" .. playerRealm
     end
-    if (realm == nil) then
-        realm = playerRealm
-    end
+    local _, realm = firstLine:match("(.+)%-(.+)")
 
     ProcessOveringTooltip(name, realm)
 end
@@ -276,9 +275,9 @@ local function OnLFGListTooltip(gametooltip, resultID)
         return
     end
     local name, realm = entry.leaderName:match("(.+)%-(.+)")
-    if (name == nil) then
-        name = playerName
-    end
+    -- if (name == nil) then
+    --     name = playerName
+    -- end
     if (realm == nil) then
         realm = playerRealm
     end
