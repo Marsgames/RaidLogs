@@ -282,9 +282,10 @@ local function OnLFGListTooltip(gametooltip, resultID)
         realm = playerRealm
     end
 
-    vaultIDs = {1189, 1190, 1191}
-    if (WLToolbox:Contains(vaultIDs, entry.activityID)) then
-        ProcessRaid(31, gametooltip, name, realm, true)
+    local grpID = C_LFGList.GetActivityInfoTable(entry.activityID).groupFinderActivityGroupID
+
+    if (db.GrpID[grpID]) then
+        ProcessRaid(db.GrpID[grpID].RaidID, gametooltip, name, realm, true)
     else
         ProcessOveringTooltip(name, realm)
     end
