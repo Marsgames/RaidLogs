@@ -3,7 +3,7 @@
 ## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
 ## Notes-enUS: Show you Warcraft Logs ranking in game 
 ## Author:  Marsgames & Tempaxe & Mío
-## Version: 1.1.31
+## Version: 1.1.32
 ## DefaultState: enabled
 
 
