@@ -123,12 +123,12 @@ def generate_db(db, region):
             tmp_db = {server: {}}
             players = get_players(db, region, server)
             for player in players:
-                nbPlayers += 1
                 tmp_db[server][player["name"]] = transform_player_data_ugly(player)
+            nbPlayers += len(tmp_db[server])
             print(f"Found {len(tmp_db[server])} players on {region}-{server}")
-            line = f"F = function() provider{dump_lua(tmp_db)} end F()\n"
-            line.replace("provider{", "provider")
-            line.replace("}}", "}")
+            lua_dump = dump_lua(tmp_db)
+            lua_dump = lua_dump[1:-1]
+            line = f"F = function() provider{lua_dump} end F()\n"
             lines.append(line)
         # Add footer
         lines.append("\nWarLogsAddCharsToDB(provider)")
