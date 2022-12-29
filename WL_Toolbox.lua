@@ -119,8 +119,28 @@ function WLToolbox:DifficultyToColor(difficulty)
     return WLToolbox:Ternary(difficulty == 5, WLToolbox.colors["purple"], WLToolbox:Ternary(difficulty == 4, WLToolbox.colors["blue"], WLToolbox.colors["green"]))
 end
 
-function WLToolbox:MetricToIcon()
-    return WLToolbox:Ternary(metric == "dps", "|A:4257:19:19|a", "|A:4258:19:19|a")
+function WLToolbox:GetMetricFromPlayertable(playertable)
+    local dps = 0
+    local hps = 0
+
+    for _, boss in pairs(playertable) do
+        for _, difficulty in pairs(boss) do
+            if (difficulty["metric"] == "dps") then
+                dps = dps + 1
+            elseif (difficulty["metric"] == "hps") then
+                hps = hps + 1
+            end
+        end
+    end
+
+    if (dps > hps) then
+        return "dps"
+    end
+    return "hps"
+end
+
+function WLToolbox:MetricToIcon(metric)
+    return WLToolbox:Ternary(metric == "dps", "|A:4257:19:19|a", WLToolbox:Ternary(metric == "hps", "|A:4258:19:19|a", "|A:4259:19:19|a"))
 end
 
 function WLToolbox:Contains(table, element)

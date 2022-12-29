@@ -54,7 +54,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     end
     -- local playerDatas = charData[unitRealm][unitName]
     local playerTable = WLToolbox:SplitDatasForPlayer(unitName, unitRealm)
-    local metric = playerTable["metric"]
+    local metric = WLToolbox:GetMetricFromPlayertable(playerTable)
 
     if (addLineBefore) then
         frame:AddLine(" ")
@@ -63,6 +63,9 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     --local TankIcon = "|A:4259:19:19|a" -- Should not appear
     frame:AddDoubleLine(raidName, WLToolbox:MetricToIcon(metric))
 
+    if (not extBosses[raid]) then
+        return
+    end
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
         local bossID = db.BossId[raid][bossName]
@@ -173,6 +176,7 @@ local function ProcessOveringTooltip(name, realm)
     for i = 1, #raidIDs do
         local raidID = raidIDs[i]
         local difficulty, raidName, score, metric = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
+        metric = WLToolbox:GetMetricFromPlayertable(playerDatas)
 
         if (score > 0) then
             local difficulty = (WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyToName(difficulty))
@@ -282,9 +286,10 @@ local function OnLFGListTooltip(gametooltip, resultID)
         realm = playerRealm
     end
 
-    vaultIDs = {1189, 1190, 1191}
-    if (WLToolbox:Contains(vaultIDs, entry.activityID)) then
-        ProcessRaid(31, gametooltip, name, realm, true)
+    local grpID = C_LFGList.GetActivityInfoTable(entry.activityID).groupFinderActivityGroupID
+
+    if (db.GrpID[grpID]) then
+        ProcessRaid(db.GrpID[grpID].RaidID, gametooltip, name, realm, true)
     else
         ProcessOveringTooltip(name, realm)
     end

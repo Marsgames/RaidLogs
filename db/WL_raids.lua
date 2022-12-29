@@ -19,10 +19,22 @@ db.RaidID = {
 -- To get groups id :
 -- https://wow.tools/dbc/?dbc=groupfinderactivity
 db.GrpID = {
-    [267] = "Castle Nathria",
-    [271] = "Sanctum of Domination",
-    [282] = "Sepulcher of the First Ones",
-    [310] = "Vault of the Incarnates"
+    -- [267] = {
+    --     ["Name"] = "Castle Nathria",
+    --     ["RaidID"] = 26
+    -- },
+    -- [271] = {
+    --     ["Name"] = "Sanctum of Domination",
+    --     ["RaidID"] = 28
+    -- },
+    -- [282] = {
+    --     ["Name"] = "Sepulcher of the First Ones",
+    --     ["RaidID"] = 29
+    -- },
+    [310] = {
+        ["Name"] = "Vault of the Incarnates",
+        ["RaidID"] = 31
+    }
 }
 
 db.BossName = {
