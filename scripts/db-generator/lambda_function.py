@@ -128,8 +128,10 @@ def generate_db(db, region):
             print(f"Found {len(tmp_db[server])} players on {region}-{server}")
             lua_dump = dump_lua(tmp_db)
             # remove first and last char (the { and })
-            lua_dump = lua_dump[1:-1]
-            lines.append(f"F = function() provider{dump_lua(tmp_db)} end F()\n")
+            line = f"F = function() provider{dump_lua(tmp_db)} end F()\n"
+            line.replace("provider{", "provider")
+            line.replace("}}", "")
+            lines.append(line)
         # Add footer
         lines.append("\nWarLogsAddCharsToDB(provider)")
         db_file.writelines(lines)
