@@ -123,34 +123,36 @@ def get_reports_players(reports, apiKeyName):
         'Authorization': f'Bearer {get_auth_token(apiKeyName)}',
         'Content-Type': 'application/json'
     }
+    players = {}
+
     query_payload = ""
-    
+
     for report in reports:
-        print(report)
         query_payload += f"Report_{report['_id']}: report(code: \\\"{report['_id']}\\\") {{ \
             rankedCharacters {{ canonicalID }}, \
-            fights {{ difficulty }}, \
+            fights(killType: Kills) {{ difficulty }}, \
             zone {{id}} \
         }}"
-    
+
     query = wcl_query_template.format(query_payload)
+    print(wcl_api_url)
+    print(query)
+
     response = requests.request("POST", wcl_api_url, headers=headers, data=query)
 
     if not response.ok:
         print(f"[ERROR] Unable to get reports data (Code : {response.status_code})\n\t{response.text}")
         raise UnknownError
-
-
-    players = {}
+        
     for report in response.json()["data"]["reportData"].values():
-        if report["rankedCharacters"] is None:
+        if report is None or report["rankedCharacters"] is None:
             continue
-        difficulties = [*set([fight["difficulty"] for fight in report["fights"] if fight["difficulty"] is not None])]
+        difficulties = [*set([fight["difficulty"] for fight in report["fights"] if fight["difficulty"] is not None and fight["difficulty"] in [3, 4, 5]])]
         for player in report["rankedCharacters"]:
             if player["canonicalID"] not in players:
                 players[player["canonicalID"]] = {}
             players[player["canonicalID"]][report["zone"]["id"]] = difficulties
-    
+            
     return players
 
 def set_api_key_exhausted(apiKeyName):
@@ -201,9 +203,9 @@ def get_remaining_wcl_points(apiKeyName):
 
     return result
 
-def drop_reports(lte_timestamp):
+def drop_reports(reports):
     print(f'Deleting all reports discovered in MongoDB reports collection')
-    return MONGO_CLIENT.reports.delete_many({"lastSeen": {"$lte": lte_timestamp.timestamp()}})
+    return MONGO_CLIENT.reports.delete_many({'_id':{'$in':[report['_id'] for report in reports]}})
 
 def lambda_handler(event, ctx):
     connect_mongo()
@@ -211,8 +213,8 @@ def lambda_handler(event, ctx):
     lte_timestamp = datetime.datetime.now() - datetime.timedelta(hours=int(os.environ["DELAY_REPORTS_IN_HOURS"]))
 
     reports = get_reports_to_discover(lte_timestamp)
-
-    if reports is None or len(list(reports.clone())) == 0:
+    total_reports = len(list(reports.clone()))
+    if reports is None or total_reports == 0:
         print(f"No reports older than {os.environ['DELAY_DISCOVERY_IN_HOURS']} hours aborting...")
         return
     
@@ -223,12 +225,20 @@ def lambda_handler(event, ctx):
         
         api_budget = get_remaining_wcl_points(keyName)
 
-        if len(list(reports.clone())) > api_budget["remaining"]: #Call cost 1 API point to discovery players in a report
+        if total_reports * 5 > api_budget["remaining"]: #Call cost 1 API point to discovery players in a report
             print("[WARN] Not enough budget to handle reports players discovery")
             continue
         
-        players = get_reports_players(reports, keyName)
-        upsert_players(players)
-        drop_reports(lte_timestamp)
+        batch_reports = []
+        nb_reports_done = 0
+        for report in reports:
+            batch_reports.append(report)
+            nb_reports_done += 1
+
+            if len(batch_reports) % 20 == 0 or total_reports == nb_reports_done:
+                players = get_reports_players(batch_reports, keyName)
+                upsert_players(players)
+                drop_reports(batch_reports)
+                batch_reports = []
 
         return {"statusCode": 200}
