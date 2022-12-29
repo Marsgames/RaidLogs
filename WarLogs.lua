@@ -63,6 +63,9 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     --local TankIcon = "|A:4259:19:19|a" -- Should not appear
     frame:AddDoubleLine(raidName, WLToolbox:MetricToIcon(metric))
 
+    if (not extBosses[raid]) then
+        return
+    end
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
         local bossID = db.BossId[raid][bossName]
