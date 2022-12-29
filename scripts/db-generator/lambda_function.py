@@ -115,6 +115,10 @@ def generate_db(db, region):
     with open(f"{git_repo_path}/db/WL_DB_{region}.lua", "w") as db_file:
         region_servers = db.players.distinct("server", {"region": region})
         lines = []
+        # Add header
+        lines.append("local provider = {}\n")
+        lines.append("local F\n\n")
+        # Add database
         for server in region_servers:
             tmp_db = {server: {}}
             players = get_players(db, region, server)
@@ -122,7 +126,12 @@ def generate_db(db, region):
                 nbPlayers += 1
                 tmp_db[server][player["name"]] = transform_player_data_ugly(player)
             print(f"Found {len(tmp_db[server])} players on {region}-{server}")
-            lines.append(f"WarLogsAddCharsToDB({dump_lua(tmp_db)})\n")
+            lua_dump = dump_lua(tmp_db)
+            # remove first and last char (the { and })
+            lua_dump = lua_dump[1:-1]
+            lines.append(f"F = function() provider{dump_lua(tmp_db)} end F()\n")
+        # Add footer
+        lines.append("\nWarLogsAddCharsToDB(provider)")
         db_file.writelines(lines)
 
     return region
