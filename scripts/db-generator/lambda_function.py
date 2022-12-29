@@ -126,11 +126,9 @@ def generate_db(db, region):
                 nbPlayers += 1
                 tmp_db[server][player["name"]] = transform_player_data_ugly(player)
             print(f"Found {len(tmp_db[server])} players on {region}-{server}")
-            lua_dump = dump_lua(tmp_db)
-            # remove first and last char (the { and })
             line = f"F = function() provider{dump_lua(tmp_db)} end F()\n"
             line.replace("provider{", "provider")
-            line.replace("}}", "")
+            line.replace("}}", "}")
             lines.append(line)
         # Add footer
         lines.append("\nWarLogsAddCharsToDB(provider)")
