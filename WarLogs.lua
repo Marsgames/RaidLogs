@@ -172,7 +172,7 @@ local function ProcessOveringTooltip(name, realm)
     GameTooltip:AddLine("WarLogs Average Ranking")
 
     local raidIDs = {31}
-    playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
+    local playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
     for i = 1, #raidIDs do
         local raidID = raidIDs[i]
         local difficulty, raidName, score, metric = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
