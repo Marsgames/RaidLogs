@@ -1,14 +1,14 @@
 import datetime
-import requests
 import os
-from pymongo import MongoClient, UpdateOne
+import requests
 import time
 
+from pymongo import MongoClient, UpdateOne
+
 wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
-# Bad, should use lambda var but flemme
 wcl_api_keys = {
     "marsgames": {
-        "key": "OTdiOWVmODMtOTgwZi00ZTc0LTk1NDktZjNjN2E0MTk0NmU1OlJNem9jeHJOS2RhSmZpSkd2OXZjYVU2WkcwZjNTNjJCcE1rOE9Ueko=",
+        "key": os.environ["WCL_KEY"],
         "token": None,
         "isExhausted": False,
     }
@@ -40,19 +40,16 @@ wcl_api_limit_query = '{"query": "query {  \
 
 class UnknownError(Exception):
     """Unknown error, it's safer to abort run"""
-
     pass
 
 
 class BadGateway(Exception):
     """Bad Gateway Error received from website, aborting this run"""
-
     pass
 
 
 class ApiKeyExhausted(Exception):
     """WCL API Key return a 429 when used"""
-
     pass
 
 

@@ -17,10 +17,9 @@ sqs_reports_queue = (
 )
 sqs = boto3.client("sqs")
 
-# Bad, should use lambda var but flemme
 wcl_api_keys = {
     "marsgames": {
-        "key": "OTdiOWVmODMtOTgwZi00ZTc0LTk1NDktZjNjN2E0MTk0NmU1OlJNem9jeHJOS2RhSmZpSkd2OXZjYVU2WkcwZjNTNjJCcE1rOE9Ueko=",
+        "key": os.environ["WCL_KEY"],
         "token": None,
         "isExhausted": False
     }
