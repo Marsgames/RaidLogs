@@ -36,7 +36,7 @@ wcl_query_template = "{{\"query\": \"query {{  \
                 {}\
         }} \
     }} \
-}}"
+}}\"}}"
 
 wcl_api_limit_query = '{"query": "query {  \
     rateLimitData { \
@@ -221,6 +221,7 @@ def get_players_stats_for_player(msg, apiKeyName, players, msgId):
     headers = {
         "Authorization": f"Bearer {get_auth_token(apiKeyName)}",
         "Content-Type": "application/json",
+        "Host": "www.warcraftlogs.com"
     }
     query_payload = ""
     idx = 0
@@ -231,6 +232,7 @@ def get_players_stats_for_player(msg, apiKeyName, players, msgId):
             idx += 1
 
     query = wcl_query_template.format(playerId, query_payload)
+
     response = requests.request("POST", wcl_api_url, headers=headers, data=query)
 
     if not response.ok:
