@@ -397,9 +397,12 @@ def lambda_handler(event, ctx):
         FunctionName=lambda_function_name
     )["ReservedConcurrentExecutions"]
 
-    minResetIn = 3600
+    minResetIn = 3630
     json_messages = [json.loads(record["body"]) for record in event["Records"]]
     print(f"Starting lambda with {len(json_messages)} new SQS messages")
+
+    print(f"WCL clears its API points every hour after first call. Scheduling reviver to reset concurrency in {minResetIn} seconds")
+    scheduler_reviver_run(minResetIn)
 
     for keyName in wcl_api_keys.keys():
         if wcl_api_keys[keyName]["isExhausted"]:
@@ -463,11 +466,11 @@ def lambda_handler(event, ctx):
     )
     decrease_lambda_concurrency(concurrency_count)
 
-    if concurrency_count == 1:
-        print(
-            f"Lambda has been disabled, scheduling the reviver func to run in at least {minResetIn} seconds"
-        )
-        scheduler_reviver_run(minResetIn)
+    # if concurrency_count == 1:
+        # print(
+        #     f"Lambda has been disabled, scheduling the reviver func to run in at least {minResetIn} seconds"
+        # )
+        # scheduler_reviver_run(minResetIn)
 
     # Safeguard to not delete SQS message which is the default behavior when lambda exit with success
     return {
