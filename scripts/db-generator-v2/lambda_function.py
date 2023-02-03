@@ -93,6 +93,7 @@ def generate_db(withDB, forRegion):
     global nbPlayers
     with open(f"{git_repo_path}/db/WL_DB_{forRegion}.lua", "w") as db_file:
         region_servers = withDB.players.distinct("server", {"region": forRegion})
+        print(f"There is {len(region_servers)} servers in {forRegion}")
         lines = []
         # Add header
         lines.append("local provider = {}\n")
@@ -117,10 +118,10 @@ def generate_db(withDB, forRegion):
 ########## Generate DB ##########
 
 ########## Mapping ##########
-def generate_reverse_mapping():
+def generate_reverse_mapping(region):
     global mapping
 
-    with open(f"{git_repo_path}/db/WL_DB_Tools.lua", "w") as db_file:
+    with open(f"{git_repo_path}/db/WL_DB_Tools_{region}.lua", "w") as db_file:
         gnippam = {}
         for k, v in enumerate(mapping):
             gnippam[k] = {
@@ -174,7 +175,6 @@ def clone_git_repo():
 def commit(region):
     global nbPlayers
 
-    print(f"Commiting new db...")
     os.system(
         f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' -m 'DB for region {region} generated' && git push"
     )
@@ -194,22 +194,27 @@ def lambda_handler(event, context):
     nbPlayers = 0
 
     # Connect to mongoDB
+    print("Connecting to MongoDB...")
     db = get_mongo_db()
 
     # Try get current region
+    print("Getting current region and nbPlayers...")
     if "region" in event:
         region = event["region"]
     if "nbPlayers" in event:
         nbPlayers = event["nbPlayers"]
 
+    # Clone git repo
+    print("Cloning git repo...")
+    clone_git_repo()
+
     # Generate DB for region
+    print(f"Generating DB for {region}...")
     generate_db(db, region)
 
     # Generate mapping for region
-    generate_reverse_mapping()
-
-    # Clone git repo
-    clone_git_repo()
+    print(f"Generating mapping for {region}...")
+    generate_reverse_mapping(region)
 
     # if region is not eu, create a sqs message for next region and send it to sqs
     if region != "EU":
@@ -220,10 +225,13 @@ def lambda_handler(event, context):
             "nbPlayers": nbPlayers,
         }
         # Send message to sqs
+        print(f"Sending message to SQS for region {next_region}...")
         send_sqs_message(message)
     else:
         # Generate git tag
+        print("Generating git tag...")
         generate_tag()
 
     # push modifications to git
+    print("Commiting to git...")
     commit(region)
