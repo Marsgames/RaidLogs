@@ -167,7 +167,7 @@ def clone_git_repo():
         print(f"Git repo already cloned, pulling...")
         os.system(f"cd {git_repo_path} && git pull")
     else:
-        print(f"Cloning git repo...")
+        print(f"Cloning new git repo...")
         os.system(
             f"git clone {git_repo_url.format(os.environ['GIT_TOKEN'])} {git_repo_path}"
         )
