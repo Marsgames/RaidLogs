@@ -193,7 +193,7 @@ def commit(region):
     global nbPlayers
 
     os.system(
-        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated {region} DB' -m 'DB for region {region} generated' && git push"
+        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated {region} DB' -m 'DB for region {region} generated\n{nbPlayers} players processed' && git push"
     )
 
 
