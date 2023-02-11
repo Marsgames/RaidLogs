@@ -35,12 +35,17 @@ def get_mongo_db():
         return client.wcl
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
+
+
 ########## Mongo DB ##########
 
 ########## Generate DB ##########
 def get_players(inDB, forRegion, forServer):
-    cursor = inDB.players.find({"region": forRegion, "server": forServer}, batch_size=1000)
+    cursor = inDB.players.find(
+        {"region": forRegion, "server": forServer}, batch_size=1000
+    )
     return cursor
+
 
 # Get a "hash" kind of value for a specific difficulty/encounter/metric combination
 def get_hash(d, e, m):
@@ -50,6 +55,7 @@ def get_hash(d, e, m):
         mapping.append(val)
 
     return mapping.index(val)
+
 
 def transform_player_data_ugly(player):
     tmp_player_data = []
@@ -65,6 +71,7 @@ def transform_player_data_ugly(player):
         )
 
     return "/".join(tmp_player_data)
+
 
 def dump_lua(data):
     if type(data) is str:
@@ -88,6 +95,7 @@ def dump_lua(data):
         )
         t += "}"
         return t
+
 
 def generate_db(withDB, forRegion):
     global nbPlayers
@@ -115,6 +123,8 @@ def generate_db(withDB, forRegion):
         db_file.writelines(lines)
 
     return forRegion
+
+
 ########## Generate DB ##########
 
 ########## Mapping ##########
@@ -135,6 +145,8 @@ def generate_reverse_mapping(region):
         db_file.write(
             f"local _, ns = ...\nlocal gnippam = {dump_lua(gnippam)}\nns.gnippam = gnippam"
         )
+
+
 ########## Mapping ##########
 
 ########## Tools ##########
@@ -153,12 +165,16 @@ def update_toc():
         toc_file.writelines(lines)
     return f"{major}.{minor}.{patch}"
 
+
 def get_next_region(current_region):
     return wow_regions[(wow_regions.index(current_region) + 1) % len(wow_regions)]
+
 
 def send_sqs_message(message):
     sqs = boto3.client("sqs")
     sqs.send_message(QueueUrl=sqs_db_queue, MessageBody=message)
+
+
 ########## Tools ##########
 
 ########## Git ##########
@@ -172,19 +188,24 @@ def clone_git_repo():
             f"git clone {git_repo_url.format(os.environ['GIT_TOKEN'])} {git_repo_path}"
         )
 
+
 def commit(region):
     global nbPlayers
 
     os.system(
-        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated DB' -m 'DB for region {region} generated' && git push"
+        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated {region} DB' -m 'DB for region {region} generated' && git push"
     )
+
 
 def generate_tag():
     version = update_toc()
     os.system(f"cd {git_repo_path} && git tag {version} && git push --tags")
     # Creating a release on github requires "gh" cli, but I'm not sure it's installed on lambda so flemme
     # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "WarLogs {version}")')
+
+
 ########## Git ##########
+
 
 def lambda_handler(event, context):
     global mapping
@@ -216,6 +237,10 @@ def lambda_handler(event, context):
     print(f"Generating mapping for {region}...")
     generate_reverse_mapping(region)
 
+    # push modifications to git
+    print("Commiting to git...")
+    commit(region)
+
     # if region is not eu, create a sqs message for next region and send it to sqs
     if region != "EU":
         # Create a sqs message for next region
@@ -225,13 +250,11 @@ def lambda_handler(event, context):
             "nbPlayers": nbPlayers,
         }
         # Send message to sqs
-        print(f"Sending message to SQS for region {next_region}...")
+        print(
+            f"Sending message to SQS for region {next_region}, with {nbPlayers} players..."
+        )
         send_sqs_message(message)
     else:
         # Generate git tag
         print("Generating git tag...")
         generate_tag()
-
-    # push modifications to git
-    print("Commiting to git...")
-    commit(region)

@@ -13,3 +13,4 @@
 
 ########## DB ##########
 ../WarLogs/db/WL_DB_TW.lua
+../WarLogs/db/WL_DB_Tools_TW.lua
