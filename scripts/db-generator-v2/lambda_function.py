@@ -211,17 +211,17 @@ def lambda_handler(event, context):
     global mapping
     global nbPlayers
     mapping = []
-    region = "TW"
+    wowRegion = "TW"
     nbPlayers = 0
 
     # Connect to mongoDB
     print("Connecting to MongoDB...")
     db = get_mongo_db()
 
-    # Try get current region
-    print("Getting current region and nbPlayers...")
-    if "region" in event:
-        region = event["region"]
+    # Try get current wowRegion
+    print("Getting current wowRegion and nbPlayers...")
+    if "wowRegion" in event:
+        wowRegion = event["wowRegion"]
     if "nbPlayers" in event:
         nbPlayers = event["nbPlayers"]
 
@@ -229,29 +229,29 @@ def lambda_handler(event, context):
     print("Cloning git repo...")
     clone_git_repo()
 
-    # Generate DB for region
-    print(f"Generating DB for {region}...")
-    generate_db(db, region)
+    # Generate DB for wowRegion
+    print(f"Generating DB for {wowRegion}...")
+    generate_db(db, wowRegion)
 
-    # Generate mapping for region
-    print(f"Generating mapping for {region}...")
-    generate_reverse_mapping(region)
+    # Generate mapping for wowRegion
+    print(f"Generating mapping for {wowRegion}...")
+    generate_reverse_mapping(wowRegion)
 
     # push modifications to git
     print("Commiting to git...")
-    commit(region)
+    commit(wowRegion)
 
-    # if region is not eu, create a sqs message for next region and send it to sqs
-    if region != "EU":
-        # Create a sqs message for next region
-        next_region = get_next_region(region)
+    # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
+    if wowRegion != "EU":
+        # Create a sqs message for next wowRegion
+        next_region = get_next_region(wowRegion)
         message = {
-            "region": next_region,
+            "wowRegion": next_region,
             "nbPlayers": nbPlayers,
         }
         # Send message to sqs
         print(
-            f"Sending message to SQS for region {next_region}, with {nbPlayers} players..."
+            f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
         )
         send_sqs_message(message)
     else:
