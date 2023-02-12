@@ -175,6 +175,11 @@ def send_sqs_message(message):
     sqs.send_message(QueueUrl=sqs_db_queue, MessageBody=message)
 
 
+def remove_tmp_folder():
+    if os.path.exists(git_repo_path):
+        os.system(f"rm -rf {git_repo_path}")
+
+
 ########## Tools ##########
 
 ########## Git ##########
@@ -266,3 +271,5 @@ def lambda_handler(event, context):
         # Generate git tag
         print("Generating git tag...")
         generate_tag()
+
+    remove_tmp_folder()
