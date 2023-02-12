@@ -179,13 +179,21 @@ def send_sqs_message(message):
 
 ########## Git ##########
 def clone_git_repo():
-    if os.path.exists(git_repo_path):
-        print(f"Git repo already cloned, pulling...")
-        os.system(f"cd {git_repo_path} && git pull")
-    else:
+    if not os.path.exists(git_repo_path):
         print(f"Cloning new git repo...")
+        # os.system(f"mkdir -p {git_repo_path}/db")
         os.system(
             f"git clone {git_repo_url.format(os.environ['GIT_TOKEN'])} {git_repo_path}"
+        )
+        print(f"Git repo cloned")
+
+    print("Updating git repo...")
+    os.system(f"cd {git_repo_path} && git pull")
+
+    if not os.path.exists(f"{git_repo_path}/db"):
+        os.system(f"cd {git_repo_path} && mkdir db")
+        print(
+            "We'll have an issue, beacause the db folder is missing, so what else is missing ?"
         )
 
 
