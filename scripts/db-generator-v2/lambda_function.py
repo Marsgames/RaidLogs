@@ -236,7 +236,8 @@ def lambda_handler(event, context):
     if "wowRegion" in event:
         wowRegion = event["wowRegion"]
     if "nbPlayers" in event:
-        nbPlayers = event["nbPlayers"]
+        # cast nbPlayers to int
+        nbPlayers = int(event["nbPlayers"])
 
     # Clone git repo
     print("Cloning git repo...")
@@ -260,7 +261,7 @@ def lambda_handler(event, context):
         next_region = get_next_region(wowRegion)
         message = {
             "wowRegion": next_region,
-            "nbPlayers": nbPlayers,
+            "nbPlayers": str(nbPlayers),
         }
         # Send message to sqs
         print(
