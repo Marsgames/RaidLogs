@@ -170,9 +170,14 @@ def get_next_region(current_region):
     return wow_regions[(wow_regions.index(current_region) + 1) % len(wow_regions)]
 
 
-def send_sqs_message(message):
+def send_sqs_message(attributes):
     sqs = boto3.client("sqs")
-    sqs.send_message(QueueUrl=sqs_db_queue, MessageBody=message)
+    message = "Updating DB"
+    sqs.send_message(
+        QueueUrl=sqs_db_queue,
+        MessageBody=message,
+        MessageAttributes=attributes,
+    )
 
 
 def remove_tmp_folder():
@@ -233,44 +238,84 @@ def lambda_handler(event, context):
 
     # Try get current wowRegion
     print("Getting current wowRegion and nbPlayers...")
-    if "wowRegion" in event:
-        wowRegion = event["wowRegion"]
-    if "nbPlayers" in event:
-        # cast nbPlayers to int
-        nbPlayers = int(event["nbPlayers"])
+    # if there is records
+    if "Records" in event:
+        for record in event["Records"]:
+            attributes = record["messageAttributes"]
+            if "wowRegion" in attributes:
+                wowRegion = attributes["wowRegion"]["stringValue"]
+            if "nbPlayers" in attributes:
+                nbPlayers = int(attributes["nbPlayers"]["stringValue"])
 
-    # Clone git repo
-    print("Cloning git repo...")
-    clone_git_repo()
+            # Clone git repo
+            print("Cloning git repo...")
+            clone_git_repo()
 
-    # Generate DB for wowRegion
-    print(f"Generating DB for {wowRegion}...")
-    generate_db(db, wowRegion)
+            # Generate DB for wowRegion
+            print(f"Generating DB for {wowRegion}...")
+            generate_db(db, wowRegion)
 
-    # Generate mapping for wowRegion
-    print(f"Generating mapping for {wowRegion}...")
-    generate_reverse_mapping(wowRegion)
+            # Generate mapping for wowRegion
+            print(f"Generating mapping for {wowRegion}...")
+            generate_reverse_mapping(wowRegion)
 
-    # push modifications to git
-    print("Commiting to git...")
-    commit(wowRegion)
+            # push modifications to git
+            print("Commiting to git...")
+            commit(wowRegion)
 
-    # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
-    if wowRegion != "EU":
-        # Create a sqs message for next wowRegion
-        next_region = get_next_region(wowRegion)
-        message = {
-            "wowRegion": next_region,
-            "nbPlayers": str(nbPlayers),
-        }
-        # Send message to sqs
-        print(
-            f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
-        )
-        send_sqs_message(message)
+            # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
+            if wowRegion != "EU":
+                # Create a sqs message for next wowRegion
+                next_region = get_next_region(wowRegion)
+                attributes = {
+                    "wowRegion": next_region,
+                    "nbPlayers": str(nbPlayers),
+                }
+                # Send message to sqs
+                print(
+                    f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
+                )
+                send_sqs_message(message)
+            else:
+                # Generate git tag
+                print("Generating git tag...")
+                generate_tag()
+
+            remove_tmp_folder()
+    
     else:
-        # Generate git tag
-        print("Generating git tag...")
-        generate_tag()
+        # Clone git repo
+        print("Cloning git repo...")
+        clone_git_repo()
 
-    remove_tmp_folder()
+        # Generate DB for wowRegion
+        print(f"Generating DB for {wowRegion}...")
+        generate_db(db, wowRegion)
+
+        # Generate mapping for wowRegion
+        print(f"Generating mapping for {wowRegion}...")
+        generate_reverse_mapping(wowRegion)
+
+        # push modifications to git
+        print("Commiting to git...")
+        commit(wowRegion)
+
+        # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
+        if wowRegion != "EU":
+            # Create a sqs message for next wowRegion
+            next_region = get_next_region(wowRegion)
+            attributes = {
+                "wowRegion": next_region,
+                "nbPlayers": str(nbPlayers),
+            }
+            # Send message to sqs
+            print(
+                f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
+            )
+            send_sqs_message(message)
+        else:
+            # Generate git tag
+            print("Generating git tag...")
+            generate_tag()
+
+        remove_tmp_folder()
