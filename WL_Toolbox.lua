@@ -153,26 +153,36 @@ function WLToolbox:Contains(table, element)
 end
 
 ---------- Events ----------
-local function ADDON_LOADED(addonName)
-    if (addonName == "WarLogs_DB_EU") then
+local addonLoaded = false
+local function OnAddonLoaded(_, _, addonName)
+    if addonLoaded then
+        do return end
+        end
+
+        if (addonName == "WarLogs_DB_EU") or (IsAddOnLoaded("WarLogs_DB_EU")) then
         WarLogsAddCharsToDB(_G["WL_DB_EU"])
         convTable = _G["EU_gnippam"]
-        print("EU db loaded")
-    elseif (addonName == "WarLogs_DB_US") then
+        addonLoaded = true
+    elseif (addonName == "WarLogs_DB_US") or (IsAddOnLoaded("WarLogs_DB_US")) then
         WarLogsAddCharsToDB(_G["WL_DB_US"])
         convTable = _G["US_gnippam"]
-    elseif (addonName == "WarLogs_DB_CN") then
+        addonLoaded = true
+    elseif (addonName == "WarLogs_DB_CN") or (IsAddOnLoaded("WarLogs_DB_CN")) then
         WarLogsAddCharsToDB(_G["WL_DB_CN"])
-            convTable = _G["CN_gnippam"]
-    elseif (addonName == "WarLogs_DB_KR") then
+        convTable = _G["CN_gnippam"]
+            addonLoaded = true
+    elseif (addonName == "WarLogs_DB_KR") or (IsAddOnLoaded("WarLogs_DB_KR")) then
         WarLogsAddCharsToDB(_G["WL_DB_KR"])
-            convTable = _G["KR_gnippam"]
-    elseif (addonName == "WarLogs_DB_TW") then
+        convTable = _G["KR_gnippam"]
+            addonLoaded = true
+    elseif (addonName == "WarLogs_DB_TW") or (IsAddOnLoaded("WarLogs_DB_TW")) then
         WarLogsAddCharsToDB(_G["WL_DB_TW"])
-            convTable = _G["TW_gnippam"]
+        convTable = _G["TW_gnippam"]
+            addonLoaded = true
     end
 end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
+f:SetScript("OnEvent", OnAddonLoaded)
 ---------- Events ----------
