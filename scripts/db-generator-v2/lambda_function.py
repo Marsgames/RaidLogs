@@ -313,7 +313,7 @@ def lambda_handler(event, context):
             print(
                 f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
             )
-            send_sqs_message(message)
+            send_sqs_message(attributes)
         else:
             # Generate git tag
             print("Generating git tag...")
