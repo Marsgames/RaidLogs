@@ -1,4 +1,4 @@
-## Interface: 100002
+## Interface: 100005
 ## Title: WarLogs Database |cff00ff00KOREA
 ## Author: Marsgames & Mantis
 ## Dependencies: WarLogs

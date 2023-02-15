@@ -1,4 +1,4 @@
-## Interface: 100002
+## Interface: 100005
 ## Title: WarLogs
 ## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
 ## Notes-enUS: Show you Warcraft Logs ranking in game 
@@ -17,22 +17,7 @@
 
 ## SavedVariables: WarLogsDB
 
-# embeds.xml
-
 ## OptionalDeps:  WarLogs_DB_EU, WarLogs_DB_US, WarLogs_DB_CN, WarLogs_DB_KR, WarLogs_DB_TW
-
-########## Localizations ##########
-#Localizations\enUS.lua
-#Localizations\frFR.lua
-#Localizations\ptBR.lua
-#Localizations\deDE.lua
-#Localizations\itIT.lua
-#Localizations\koKR.lua
-#Localizations\esMX.lua
-#Localizations\ruRU.lua
-#Localizations\zhCN.lua
-#Localizations\esES.lua
-#Localizations\zhTW.lua
 
 ########## DB ##########
 db\WL_raids.lua
