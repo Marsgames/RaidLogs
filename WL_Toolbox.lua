@@ -1,9 +1,9 @@
 WLToolbox = {}
 WLToolbox.__index = WLToolbox
 
-local addonName, ns = ...
+local _, ns = ...
 local db = ns.db
-local convTable = ns.gnippam
+local convTable = {}
 
 -- Colors used in the addon (principally for the rank percentages)
 WLToolbox.colors = {
@@ -151,3 +151,28 @@ function WLToolbox:Contains(table, element)
     end
     return false
 end
+
+---------- Events ----------
+local function ADDON_LOADED(addonName)
+    if (addonName == "WarLogs_DB_EU") then
+        WarLogsAddCharsToDB(_G["WL_DB_EU"])
+        convTable = _G["EU_gnippam"]
+        print("EU db loaded")
+    elseif (addonName == "WarLogs_DB_US") then
+        WarLogsAddCharsToDB(_G["WL_DB_US"])
+        convTable = _G["US_gnippam"]
+    elseif (addonName == "WarLogs_DB_CN") then
+        WarLogsAddCharsToDB(_G["WL_DB_CN"])
+            convTable = _G["CN_gnippam"]
+    elseif (addonName == "WarLogs_DB_KR") then
+        WarLogsAddCharsToDB(_G["WL_DB_KR"])
+            convTable = _G["KR_gnippam"]
+    elseif (addonName == "WarLogs_DB_TW") then
+        WarLogsAddCharsToDB(_G["WL_DB_TW"])
+            convTable = _G["TW_gnippam"]
+    end
+end
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("ADDON_LOADED")
+---------- Events ----------

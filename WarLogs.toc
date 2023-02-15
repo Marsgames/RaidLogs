@@ -19,6 +19,8 @@
 
 # embeds.xml
 
+## OptionalDeps:  WarLogs_DB_EU, WarLogs_DB_US, WarLogs_DB_CN, WarLogs_DB_KR, WarLogs_DB_TW
+
 ########## Localizations ##########
 #Localizations\enUS.lua
 #Localizations\frFR.lua
