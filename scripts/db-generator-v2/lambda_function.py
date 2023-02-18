@@ -218,7 +218,11 @@ def commit(region):
 
 def generate_tag():
     version = update_toc()
+    os.system(
+        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated {version} tag' && git push"
+    )
     os.system(f"cd {git_repo_path} && git tag {version} && git push --tags")
+
     # Creating a release on github requires "gh" cli, but I'm not sure it's installed on lambda so flemme
     # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "WarLogs {version}")')
 
