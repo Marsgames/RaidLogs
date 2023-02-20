@@ -265,10 +265,9 @@ def lambda_handler(event, context):
             if wowRegion != "EU":
                 # Create a sqs message for next wowRegion
                 next_region = get_next_region(wowRegion)
-                attributes = {
-                    "wowRegion": next_region,
-                    "nbPlayers": str(nbPlayers),
-                }
+                attributes = {"wowRegion": {}, "nbPlayers": {}}
+                attributes["wowRegion"]["stringValue"] = next_region
+                attributes["nbPlayers"]["stringValue"] = str(nbPlayers)
                 # Send message to sqs
                 print(
                     f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
