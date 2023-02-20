@@ -119,7 +119,7 @@ def generate_db(withDB, forRegion):
             line = f"F = function() provider{lua_dump} end F()\n"
             lines.append(line)
         # Add footer
-        lines.append("\n_G[WL_DB_{forRegion}] = provider")
+        lines.append(f'\n_G["WL_DB_{forRegion}"] = provider')
         # lines.append("\nWarLogsAddCharsToDB(provider)")
         db_file.writelines(lines)
 
@@ -142,7 +142,7 @@ def generate_reverse_mapping(region):
             }
 
         print(f"Saving reverse mapping...")
-        print(gnippam)
+        # print(gnippam)
         db_file.write(
             f'local _, ns = ...\nlocal gnippam = {dump_lua(gnippam)}\n_G["{region}_gnippam"] = gnippam'
         )
@@ -218,10 +218,17 @@ def commit(region):
 
 def generate_tag():
     version = update_toc()
+    os.system(
+        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated {version} tag' && git push"
+    )
     os.system(f"cd {git_repo_path} && git tag {version} && git push --tags")
+
     # Creating a release on github requires "gh" cli, but I'm not sure it's installed on lambda so flemme
     # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "WarLogs {version}")')
+
+
 ########## Git ##########
+
 
 def lambda_handler(event, context):
     global mapping
@@ -279,7 +286,7 @@ def lambda_handler(event, context):
                 generate_tag()
 
             remove_tmp_folder()
-    
+
     else:
         # Clone git repo
         print("Cloning git repo...")
@@ -309,7 +316,7 @@ def lambda_handler(event, context):
             print(
                 f"Sending message to SQS for wowRegion {next_region}, with {nbPlayers} players..."
             )
-            send_sqs_message(message)
+            send_sqs_message(attributes)
         else:
             # Generate git tag
             print("Generating git tag...")

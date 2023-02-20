@@ -157,9 +157,9 @@ local addonLoaded = false
 local function OnAddonLoaded(_, _, addonName)
     if addonLoaded then
         do return end
-        end
+    end
 
-        if (addonName == "WarLogs_DB_EU") or (IsAddOnLoaded("WarLogs_DB_EU")) then
+    if (addonName == "WarLogs_DB_EU") or (IsAddOnLoaded("WarLogs_DB_EU")) then
         WarLogsAddCharsToDB(_G["WL_DB_EU"])
         convTable = _G["EU_gnippam"]
         addonLoaded = true
