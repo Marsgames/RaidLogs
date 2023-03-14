@@ -20,7 +20,7 @@ sqs = boto3.client("sqs")
 wcl_api_keys = {
     "marsgames": {
         "key": os.environ["WCL_KEY"],
-        "token": None,
+        "token": os.environ["WCL_TOKEN"],
         "isExhausted": False
     }
 }

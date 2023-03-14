@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VENV_PATH="/mnt/c/Users/17025/.virtualenvs/player-finder-RQgCxzlK/Lib/site-packages"
-GIT_SCRAPPER_PATH="/mnt/f/Projects/WarLogsRanking/scripts/player-finder"
+VENV_PATH="/Users/rd-headcrab/.local/share/virtualenvs/player-finder-11SSAkKo"
+GIT_SCRAPPER_PATH="/Users/rd-headcrab/Documents/HE/WarLogs/scripts/player-finder"
 
 rm $VENV_PATH/lambda_function.py
 rm $GIT_SCRAPPER_PATH/lambda_package.zip

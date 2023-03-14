@@ -9,7 +9,7 @@ wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
 wcl_api_keys = {
     "marsgames": {
         "key": os.environ["WCL_KEY"],
-        "token": None,
+        "token": os.environ["WCL_TOKEN"],
         "isExhausted": False,
     }
 }
@@ -266,13 +266,19 @@ def lambda_handler(event, ctx):
 
         api_budget = get_remaining_wcl_points(keyName)
 
-        if total_reports * 5 > api_budget["remaining"]: #Call cost 1 API point to discovery players in a report
-            print("[WARN] Not enough budget to handle reports players discovery")
-            continue
+        # if total_reports * 5 > api_budget["remaining"]: #Call cost 1 API point to discovery players in a report
+        #     print("[WARN] Not enough budget to handle reports players discovery")
+        #     continue
+
+        reports_to_process = []
+        while api_budget["remaining"] > len(reports_to_process) * 5:
+            reports_to_process.append(reports.next())
+            if reports_to_process[-1] is None:
+                break
         
         batch_reports = []
         nb_reports_done = 0
-        for report in reports:
+        for report in reports_to_process:
             batch_reports.append(report)
             nb_reports_done += 1
 
