@@ -130,8 +130,10 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
     end
     frame:AddLine(" ")
 
+
     if (not charData[unitRealm] or not charData[unitRealm][unitName]) then
-        ProcessEmptyRaid(31, frame, false)
+        -- ProcessEmptyRaid(31, frame, false)
+        ProcessEmptyRaid(33, frame, false)
         return frame
     end
 
@@ -147,9 +149,11 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
             ProcessRaid(raidID, frame, unitRealm, unitName, false)
         else
             ProcessRaid(31, frame, unitRealm, unitName)
+            ProcessRaid(33, frame, unitRealm, unitName, true)
         end
     else
         ProcessRaid(31, frame, unitRealm, unitName)
+        ProcessRaid(33, frame, unitRealm, unitName, true)
     end
 
     return frame
@@ -171,7 +175,8 @@ local function ProcessOveringTooltip(name, realm)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("WarLogs Average Ranking")
 
-    local raidIDs = {31}
+    -- Do not forget to update raidIDs when adding a new raid
+    local raidIDs = {31, 33}
     local playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
     for i = 1, #raidIDs do
         local raidID = raidIDs[i]

@@ -7,13 +7,15 @@ db.RaidName = {
     [26] = "Castle Nathria",
     [28] = "Sanctum of Domination",
     [29] = "Sepulcher of the First Ones",
-    [31] = "Vault of the Incarnates"
+    [31] = "Vault of the Incarnates",
+    [33] = "Aberrus, the Shadowed Crucible",
 }
 db.RaidID = {
     ["Castle Nathria"] = 26,
     ["Sanctum of Domination"] = 28,
     ["Sepulcher of the First Ones"] = 29,
-    ["Vault of the Incarnates"] = 31
+    ["Vault of the Incarnates"] = 31,
+    ["Aberrus, the Shadowed Crucible"] = 33,
 }
 
 -- To get groups id :
@@ -34,6 +36,10 @@ db.GrpID = {
     [310] = {
         ["Name"] = "Vault of the Incarnates",
         ["RaidID"] = 31
+    },
+    [313] = {
+        ["Name"] = "Aberrus, the Shadowed Crucible",
+        ["RaidID"] = 33
     }
 }
 
@@ -84,6 +90,17 @@ db.BossName = {
         [2605] = "Kurog Grimtotem",
         [2614] = "Broodkeeper Diurna",
         [2607] = "Raszageth the Storm-Eater"
+    },
+    [33] = {
+        [2688] = "Kazzara, the Hellforged",
+        [2687] = "The Amalgamation Chamber",
+        [2693] = "The Forgotten Experiments",
+        [2682] = "Assault of the Zaqali",
+        [2680] = "Rashok, the Elder",
+        [2689] = "The Vigilant Steward, Zskarn",
+        [2683] = "Magmorax",
+        [2684] = "Echo of Neltharion",
+        [2685] = "Scalecommander Sarkareth",
     }
 }
 db.BossId = {
@@ -133,6 +150,17 @@ db.BossId = {
         ["Kurog Grimtotem"] = 2605,
         ["Broodkeeper Diurna"] = 2614,
         ["Raszageth the Storm-Eater"] = 2607
+    },
+    [33] = {
+        ["Kazzara, the Hellforged"] = 2688,
+        ["The Amalgamation Chamber"] = 2687,
+        ["The Forgotten Experiments"] = 2693,
+        ["Assault of the Zaqali"] = 2682,
+        ["Rashok, the Elder"] = 2680,
+        ["The Vigilant Steward, Zskarn"] = 2689,
+        ["Magmorax"] = 2683,
+        ["Echo of Neltharion"] = 2684,
+        ["Scalecommander Sarkareth"] = 2685,
     }
 }
 
@@ -186,6 +214,17 @@ db["Extension"] = {
             [5] = "Kurog Grimtotem",
             [6] = "Broodkeeper Diurna",
             [7] = "Raszageth the Storm-Eater"
+        },
+        [33] = {
+            [0] = "Kazzara, the Hellforged",
+            [1] = "The Amalgamation Chamber",
+            [2] = "The Forgotten Experiments",
+            [3] = "Assault of the Zaqali",
+            [4] = "Rashok, the Elder",
+            [5] = "The Vigilant Steward, Zskarn",
+            [6] = "Magmorax",
+            [7] = "Echo of Neltharion",
+            [8] = "Scalecommander Sarkareth",
         }
     }
 }
