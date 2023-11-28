@@ -1,7 +1,6 @@
 import boto3
-import os
 import decimal
-import json
+import os
 
 from pymongo import MongoClient
 
