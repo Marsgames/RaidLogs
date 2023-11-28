@@ -7,8 +7,9 @@ from pymongo import MongoClient, UpdateOne
 
 wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
 wcl_api_keys = {
-    "marsgames": {
+    "QuantiteVerveine": {
         "key": os.environ["WCL_KEY"],
+        "secret": os.environ["WCL_SECRET"],
         "token": os.environ["WCL_TOKEN"],
         "isExhausted": False,
     }
@@ -65,11 +66,7 @@ def get_auth_token(apiKeyName, retry=False):
     # Token never generated on this container
     print(f"Generating auth token for {apiKeyName}...")
 
-    headers = {"Authorization": f"Basic {wcl_api_keys[apiKeyName]['key']}"}
-
-    response = requests.request(
-        "POST", wcl_token_url, headers=headers, data=wcl_token_payload
-    )
+    response = requests.post(wcl_token_url, auth=(wcl_api_keys[apiKeyName]['key'], wcl_api_keys[apiKeyName]['secret']), data=wcl_token_payload)
 
     # Handling case when api point limit reach, authentication is failing too
     if response.ok:
