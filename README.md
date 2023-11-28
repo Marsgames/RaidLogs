@@ -1,3 +1,10 @@
+########### Order of execution #############
+1. report-scrapper / WCLReportScrapper --> Get new reports from website
+2. player-finder / WCLPlayerDiscover --> Get players to parse from reports
+3. player-finder-aggregator / WCLPlayerDiscoverAggregator --> Aggregate players and send them to SQS
+4. player-rank / WCLGetPlayerRanks --> Get ranks for players in SQS
+5. db-generator-v2 / WCLGenerateDBv2 --> Generate LUA DB from players
+
 ############## Package Lambda Func #############
 1. aws configure
 2. pip install pipenv
