@@ -9,6 +9,7 @@ db.RaidName = {
     [29] = "Sepulcher of the First Ones",
     [31] = "Vault of the Incarnates",
     [33] = "Aberrus, the Shadowed Crucible",
+    [35] = "Amirdrassil, the Dream's Hope"
 }
 db.RaidID = {
     ["Castle Nathria"] = 26,
@@ -16,10 +17,11 @@ db.RaidID = {
     ["Sepulcher of the First Ones"] = 29,
     ["Vault of the Incarnates"] = 31,
     ["Aberrus, the Shadowed Crucible"] = 33,
+    ["Amirdrassil, the Dream's Hope"] = 35
 }
 
 -- To get groups id :
--- https://wow.tools/dbc/?dbc=groupfinderactivity
+-- https://wago.tools/db2/GroupFinderActivity
 db.GrpID = {
     -- [267] = {
     --     ["Name"] = "Castle Nathria",
@@ -40,6 +42,10 @@ db.GrpID = {
     [313] = {
         ["Name"] = "Aberrus, the Shadowed Crucible",
         ["RaidID"] = 33
+    },
+    [319] = {
+        ["Name"] = "Amirdrassil, the Dream's Hope",
+        ["RaidID"] = 35
     }
 }
 
@@ -101,6 +107,17 @@ db.BossName = {
         [2683] = "Magmorax",
         [2684] = "Echo of Neltharion",
         [2685] = "Scalecommander Sarkareth",
+    },
+    [35] = {
+        [2820] = "Gnarlroot",
+        [2709] = "Igira the Cruel",
+        [2737] = "Volcoross",
+        [2728] = "Council of Dreams",
+        [2731] = "Larodar, Keeper of the Flame",
+        [2708] = "Nymue, Weaver of the Cycle",
+        [2824] = "Smolderon",
+        [2786] = "Tingral Sageswift, Seer of the Flame",
+        [2677] = "Fyrakk the Blazing"
     }
 }
 db.BossId = {
@@ -161,6 +178,17 @@ db.BossId = {
         ["Magmorax"] = 2683,
         ["Echo of Neltharion"] = 2684,
         ["Scalecommander Sarkareth"] = 2685,
+    },
+    [35] = {
+        ["Gnarlroot"] = 2820,
+        ["Igira the Cruel"] = 2709,
+        ["Volcoross"] = 2737,
+        ["Council of Dreams"] = 2728,
+        ["Larodar, Keeper of the Flame"] = 2731,
+        ["Nymue, Weaver of the Cycle"] = 2708,
+        ["Smolderon"] = 2824,
+        ["Tingral Sageswift, Seer of the Flame"] = 2786,
+        ["Fyrakk the Blazing"] = 2677
     }
 }
 
@@ -225,6 +253,17 @@ db["Extension"] = {
             [6] = "Magmorax",
             [7] = "Echo of Neltharion",
             [8] = "Scalecommander Sarkareth",
+        },
+        [35] = {
+            [0] = "Gnarlroot",
+            [1] = "Igira the Cruel",
+            [2] = "Volcoross",
+            [3] = "Council of Dreams",
+            [4] = "Larodar, Keeper of the Flame",
+            [5] = "Nymue, Weaver of the Cycle",
+            [6] = "Smolderon",
+            [7] = "Tingral Sageswift, Seer of the Flame",
+            [8] = "Fyrakk the Blazing"
         }
     }
 }

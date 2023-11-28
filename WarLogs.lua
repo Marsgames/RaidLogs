@@ -133,10 +133,12 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
 
     if (not charData[unitRealm] or not charData[unitRealm][unitName]) then
         -- ProcessEmptyRaid(31, frame, false)
-        ProcessEmptyRaid(33, frame, false)
+        -- ProcessEmptyRaid(33, frame, false)
+        ProcessEmptyRaid(35, frame, false)
         return frame
     end
 
+    -- TODO: Update this when adding a new raid
     if not (C_LFGList.GetActiveEntryInfo() == nil) and not (unitName == playerName and unitRealm == playerRealm) then
         local infos = C_LFGList.GetActiveEntryInfo()
         local it = C_LFGList.GetActivityInfoTable(infos.activityID)
@@ -150,10 +152,12 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
         else
             ProcessRaid(31, frame, unitRealm, unitName)
             ProcessRaid(33, frame, unitRealm, unitName, true)
+            ProcessRaid(35, frame, unitRealm, unitName, true)
         end
     else
         ProcessRaid(31, frame, unitRealm, unitName)
         ProcessRaid(33, frame, unitRealm, unitName, true)
+        ProcessRaid(35, frame, unitRealm, unitName, true)
     end
 
     return frame
@@ -175,8 +179,8 @@ local function ProcessOveringTooltip(name, realm)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("WarLogs Average Ranking")
 
-    -- Do not forget to update raidIDs when adding a new raid
-    local raidIDs = {31, 33}
+    -- TODO: Do not forget to update raidIDs when adding a new raid
+    local raidIDs = {31, 33, 35}
     local playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
     for i = 1, #raidIDs do
         local raidID = raidIDs[i]
