@@ -18,10 +18,11 @@ sqs_reports_queue = (
 sqs = boto3.client("sqs")
 
 wcl_api_keys = {
-    "marsgames": {
+    "QuantiteVerveine": {
         "key": os.environ["WCL_KEY"],
+        "secret": os.environ["WCL_SECRET"],
         "token": os.environ["WCL_TOKEN"],
-        "isExhausted": False
+        "isExhausted": False,
     }
 }
 wcl_api_url = "https://www.warcraftlogs.com/api/v2/client"
@@ -176,11 +177,7 @@ def get_auth_token(apiKeyName, retry=False):
     # Token never generated on this container
     print(f"Generating auth token for {apiKeyName}...")
 
-    headers = {"Authorization": f"Basic {wcl_api_keys[apiKeyName]['key']}"}
-
-    response = requests.request(
-        "POST", wcl_token_url, headers=headers, data=wcl_token_payload
-    )
+    response = requests.post(wcl_token_url, auth=(wcl_api_keys[apiKeyName]['key'], wcl_api_keys[apiKeyName]['secret']), data=wcl_token_payload)
 
     # Handling case when api point limit reach, authentication is failing too
     if response.ok:
@@ -203,7 +200,7 @@ def get_auth_token(apiKeyName, retry=False):
         print(
             f"[ERROR] Auth failed for unknown reason (Code : {response.status_code}, IsRetry : {retry})\n\t{response.headers}\n\t{response.text}"
         )
-        abort_container_run()
+        raise UnknownError
 
     return wcl_api_keys[apiKeyName]["token"]
 
