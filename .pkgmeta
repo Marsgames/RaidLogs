@@ -14,3 +14,4 @@ ignore:
  - .vscode
  - .gitignore
  - .github
+ - .git
