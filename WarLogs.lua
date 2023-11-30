@@ -49,7 +49,12 @@ end
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
     if (not charData[unitRealm]) or (not charData[unitRealm][unitName]) then
-        ProcessEmptyRaid(raid, frame, addLineBefore)
+        local lastRaid = WLToolbox:GetLastRaidNumber(extBosses)
+        if (raid == lastRaid) then
+            ProcessEmptyRaid(raid, frame, addLineBefore)
+        else
+            frame:AddDoubleLine(raidName, WLToolbox.colors.grey .. "No data")
+        end
         return
     end
     -- local playerDatas = charData[unitRealm][unitName]
@@ -106,7 +111,7 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
     local frame = WarLogsFrame or CreateFrame("GameTooltip", "WarLogsFrame", PVEFrame, "GameTooltipTemplate")
     frame:SetOwner(PVEFrame, "ANCHOR_NONE")
 
-    if (IsAddOnLoaded("RaiderIO")) then
+    if (C_AddOns.IsAddOnLoaded("RaiderIO")) then
         local ri = RaiderIO_ProfileTooltip
         frame:SetPoint("TOPLEFT", ri, "TOPRIGHT", 0, 0)
     else
