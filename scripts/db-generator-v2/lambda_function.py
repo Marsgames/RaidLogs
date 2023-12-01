@@ -264,7 +264,7 @@ def lambda_handler(event, context):
             generate_reverse_mapping(wowRegion)
 
             # push modifications to git
-            print("Commiting to git...")
+            print("Committing to git...")
             commit(wowRegion)
 
             # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
@@ -300,7 +300,7 @@ def lambda_handler(event, context):
         generate_reverse_mapping(wowRegion)
 
         # push modifications to git
-        print("Commiting to git...")
+        print("Committing to git...")
         commit(wowRegion)
 
         # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
