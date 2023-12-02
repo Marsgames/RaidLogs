@@ -129,7 +129,11 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
     end
 
     if (unitName == "Niisha" and unitRealm == "Temple noir") or (unitName == "Tempaxe" and unitRealm == "Temple noir") or (unitName == "Mío" and unitRealm == "Hyjal") then
-        frame:AddLine(WLToolbox.colors.green .. unitName .. WLToolbox.colors.white .. " - " .. WLToolbox.colors.blue .. unitRealm .. WLToolbox.colors.white .. " | " .. WLToolbox.colors.purple .. "Author")
+        frame:AddLine(WLToolbox.colors.green ..
+        unitName ..
+        WLToolbox.colors.white ..
+        " - " ..
+        WLToolbox.colors.blue .. unitRealm .. WLToolbox.colors.white .. " | " .. WLToolbox.colors.purple .. "Author")
     else
         frame:AddLine(WLToolbox.colors.white .. unitName .. " - " .. unitRealm)
     end
@@ -152,17 +156,22 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
         local englishName = db.GrpID[grpID]
         local raidID = db.RaidID[englishName]
 
+        local raidIDs = WLToolbox:GetAllRaidsNumber(extBosses)
         if (not IsAltKeyDown()) and not (englishName == nil) then
             ProcessRaid(raidID, frame, unitRealm, unitName, false)
         else
-            ProcessRaid(31, frame, unitRealm, unitName)
-            ProcessRaid(33, frame, unitRealm, unitName, true)
-            ProcessRaid(35, frame, unitRealm, unitName, true)
+            for i = 1, #raidIDs do
+                local id = raidIDs[i]
+                ProcessRaid(id, frame, unitRealm, unitName, false)
+            end
+            -- -- ProcessRaid(31, frame, unitRealm, unitName)
+            -- -- ProcessRaid(33, frame, unitRealm, unitName, true)
+            -- ProcessRaid(35, frame, unitRealm, unitName, false)
         end
     else
-        ProcessRaid(31, frame, unitRealm, unitName)
-        ProcessRaid(33, frame, unitRealm, unitName, true)
-        ProcessRaid(35, frame, unitRealm, unitName, true)
+        -- ProcessRaid(31, frame, unitRealm, unitName)
+        -- ProcessRaid(33, frame, unitRealm, unitName, true)
+        ProcessRaid(35, frame, unitRealm, unitName, false)
     end
 
     return frame
@@ -184,8 +193,7 @@ local function ProcessOveringTooltip(name, realm)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("WarLogs Average Ranking")
 
-    -- TODO: Do not forget to update raidIDs when adding a new raid
-    local raidIDs = {31, 33, 35}
+    local raidIDs = WLToolbox:GetAllRaidsNumber(extBosses)
     local playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
     for i = 1, #raidIDs do
         local raidID = raidIDs[i]

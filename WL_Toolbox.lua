@@ -160,6 +160,15 @@ function WLToolbox:GetLastRaidNumber(raids)
     return lastRaid
 end
 
+function WLToolbox:GetAllRaidsNumber(extension)
+    local raids = {}
+    for raidNumber, _ in pairs(extension) do
+        table.insert(raids, raidNumber)
+    end
+    table.sort(raids)
+    return raids
+end
+
 ---------- Events ----------
 local addonLoaded = false
 local function OnAddonLoaded(_, _, addonName)
