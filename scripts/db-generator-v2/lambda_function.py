@@ -272,7 +272,9 @@ def lambda_handler(event, context):
                 # Create a sqs message for next wowRegion
                 next_region = get_next_region(wowRegion)
                 attributes = {"wowRegion": {}, "nbPlayers": {}}
+                attributes["wowRegion"]["DataType"] = "String"
                 attributes["wowRegion"]["StringValue"] = next_region
+                attributes["nbPlayers"]["DataType"] = "String"
                 attributes["nbPlayers"]["StringValue"] = str(nbPlayers)
                 # Send message to sqs
                 print(
@@ -308,7 +310,9 @@ def lambda_handler(event, context):
             # Create a sqs message for next wowRegion
             next_region = get_next_region(wowRegion)
             attributes = {"wowRegion": {}, "nbPlayers": {}}
+            attributes["wowRegion"]["DataType"] = "String"
             attributes["wowRegion"]["StringValue"] = next_region
+            attributes["nbPlayers"]["DataType"] = "String"
             attributes["nbPlayers"]["StringValue"] = str(nbPlayers)
             # Send message to sqs
             print(

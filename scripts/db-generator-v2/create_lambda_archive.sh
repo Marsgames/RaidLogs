@@ -20,5 +20,5 @@ zip -r9 ../lambda_package.zip *
 cd ..
 zip -g lambda_package.zip lambda_function.py
 # aws lambda update-function-code --function-name WCLGenerateDBv2 --region us-east-1 --zip-file fileb://lambda_package.zip
-# rm -rf packages
+rm -rf packages
 # rm lambda_package.zip
