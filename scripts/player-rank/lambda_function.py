@@ -164,6 +164,23 @@ def connect_mongo():
     except Exception as e:
         print(f"Unable to connect to server:\n\t{e}")
 
+def get_prior_characters():
+    now = datetime.now()
+    timestamp = datetime(now.year, now.month, now.day).timestamp()
+    characters = mongo_client.priority.find({}, {"_id": 1})
+    
+    chars = []
+    for char in characters:
+        if char["timestamp"] < timestamp:
+            chars.append(char)
+
+    return chars
+
+def update_prior_timestamp(players):
+    now = datetime.now()
+    timestamp = datetime(now.year, now.month, now.day).timestamp()
+    for player in players:
+        mongo_client.priority.update_one({"_id": int(player.id)}, {"$set": {"timestamp": timestamp}}, upsert=True)
 
 def get_auth_token(apiKeyName, retry=False):
     global wcl_api_keys
@@ -415,6 +432,32 @@ def lambda_handler(event, ctx):
                 connect_mongo()
 
             players = {}
+
+            prior_players = get_prior_characters()
+            if len(prior_players) > 0:
+                print(f"Found {len(prior_players)} prior players to process")
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    tasks = []
+                    msgIdx = 0
+                    for msg in prior_players:
+                        tasks.append(
+                            executor.submit(
+                                get_players_stats_for_player,
+                                msg,
+                                keyName,
+                                players,
+                                msgIdx,
+                            )
+                        )
+                        msgIdx += 1
+                    
+                    failed_messages = []
+
+                    for future in as_completed(tasks):
+                        if future.result()[0] == False:
+                            failed_messages.append(future.result()[1])
+
+                update_prior_timestamp(prior_players)
 
             # Multithread is more a headache than a solution here, better go with simple for loop
             # Nightmare to manage multithread + lambda concurrency and handle all the rate limit errors

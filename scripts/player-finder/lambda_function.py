@@ -10,7 +10,7 @@ wcl_api_keys = {
     "QuantiteVerveine": {
         "key": os.environ["WCL_KEY"],
         "secret": os.environ["WCL_SECRET"],
-        "token": os.environ["WCL_TOKEN"],
+        "token": None,
         "isExhausted": False,
     }
 }
@@ -286,3 +286,7 @@ def lambda_handler(event, ctx):
                 batch_reports = []
 
         return {"statusCode": 200}
+
+# # TODO: Comment this when uploading to AWS
+# if __name__ == "__main__":
+#     lambda_handler(None, None)
