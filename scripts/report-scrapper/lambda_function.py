@@ -89,3 +89,7 @@ def lambda_handler(event, ctx):
     upsert_reports(recent_reports)
 
     return {'statusCode': 200}
+
+# TODO: Comment this when using AWS
+if __name__ == "__main__":
+    lambda_handler(None, None)

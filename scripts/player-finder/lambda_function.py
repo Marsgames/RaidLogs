@@ -287,6 +287,6 @@ def lambda_handler(event, ctx):
 
         return {"statusCode": 200}
 
-# # TODO: Comment this when uploading to AWS
-# if __name__ == "__main__":
-#     lambda_handler(None, None)
+# TODO: Comment this when uploading to AWS
+if __name__ == "__main__":
+    lambda_handler(None, None)

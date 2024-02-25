@@ -7,6 +7,18 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient, UpdateOne
 import os
 
+global using_aws
+global sqs
+global lambda_client
+global scheduler_client
+global concurrency_count
+
+using_aws = True
+sqs = None
+lambda_client = None
+scheduler_client = None
+concurrency_count = None
+
 # The number of point used per request to WCL, approximative, this is used to stop a bit before the limit by multiplying with the number of message to process
 api_call_budget = int(os.environ["WCL_CALL_BUDGET"])
 
@@ -15,13 +27,12 @@ wcl_token_payload = {"grant_type": "client_credentials"}
 sqs_reports_queue = (
     "https://sqs.us-east-1.amazonaws.com/697133125351/wcl-discovered-players"
 )
-sqs = boto3.client("sqs")
 
 wcl_api_keys = {
     "QuantiteVerveine": {
         "key": os.environ["WCL_KEY"],
         "secret": os.environ["WCL_SECRET"],
-        "token": os.environ["WCL_TOKEN"],
+        "token": None,
         "isExhausted": False,
     }
 }
@@ -46,12 +57,10 @@ wcl_api_limit_query = '{"query": "query {  \
         pointsResetIn \
     } \
 }"}'
+
 mongo_client = None
-lambda_client = boto3.client("lambda")
 lambda_function_name = os.environ["AWS_LAMBDA_FUNCTION_NAME"]
 scheduler_reviver_name = os.environ["SCHEDULER_REVIVER_NAME"]
-scheduler_client = boto3.client("events")
-
 
 class Player:
     def __init__(self, player_data, id):
@@ -167,11 +176,18 @@ def connect_mongo():
 def get_prior_characters():
     now = datetime.now()
     timestamp = datetime(now.year, now.month, now.day).timestamp()
-    characters = mongo_client.priority.find({}, {"_id": 1})
+    characters = mongo_client.priority.find({})
     
     chars = []
     for char in characters:
         if char["timestamp"] < timestamp:
+            char["id"] = str(char["_id"])     
+            raids = char["raids"].split(",")
+            difficulties = char["difficulties"].split(",")
+            char["raids"] = {}
+            for raid in raids:
+                char["raids"][raid] = difficulties
+
             chars.append(char)
 
     return chars
@@ -180,7 +196,7 @@ def update_prior_timestamp(players):
     now = datetime.now()
     timestamp = datetime(now.year, now.month, now.day).timestamp()
     for player in players:
-        mongo_client.priority.update_one({"_id": int(player.id)}, {"$set": {"timestamp": timestamp}}, upsert=True)
+        mongo_client.priority.update_one({"_id": int(player["_id"])}, {"$set": {"timestamp": timestamp}}, upsert=True)
 
 def get_auth_token(apiKeyName, retry=False):
     global wcl_api_keys
@@ -407,16 +423,30 @@ def get_raid_count_from_batch(batch):
 
 
 def lambda_handler(event, ctx):
-    concurrency_count = lambda_client.get_function_concurrency(
-        FunctionName=lambda_function_name
-    )["ReservedConcurrentExecutions"]
+    global using_aws
+    global sqs
+    global lambda_client
+    global scheduler_client
+    global concurrency_count
+
+    if event["Records"] == []:
+        concurrency_count = 1
+    if using_aws:
+        sqs = boto3.client("sqs")
+        lambda_client = boto3.client("lambda")
+        scheduler_client = boto3.client("events")
+    
+        concurrency_count = lambda_client.get_function_concurrency(
+            FunctionName=lambda_function_name
+        )["ReservedConcurrentExecutions"]
 
     minResetIn = 3630
     json_messages = [json.loads(record["body"]) for record in event["Records"]]
     print(f"Starting lambda with {len(json_messages)} new SQS messages")
 
     print(f"WCL clears its API points every hour after first call. Scheduling reviver to reset concurrency in {minResetIn} seconds")
-    scheduler_reviver_run(minResetIn)
+    if using_aws:
+        scheduler_reviver_run(minResetIn)
 
     for keyName in wcl_api_keys.keys():
         if wcl_api_keys[keyName]["isExhausted"]:
@@ -504,7 +534,8 @@ def lambda_handler(event, ctx):
     print(
         "No API Key found with enough budget to handle all the calls decreasing concurrency..."
     )
-    decrease_lambda_concurrency(concurrency_count)
+    if using_aws:
+        decrease_lambda_concurrency(concurrency_count)
 
     # if concurrency_count == 1:
         # print(
@@ -518,3 +549,8 @@ def lambda_handler(event, ctx):
             {"itemIdentifier": msg["messageId"] for msg in event["Records"]}
         ]
     }
+
+if __name__ == "__main__":
+    using_aws = False
+    concurrency_count = 1
+    lambda_handler({"Records": []}, None)
