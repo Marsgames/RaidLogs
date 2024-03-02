@@ -1,4 +1,4 @@
-## Interface: 100200
+## Interface: 100107
 ## Title: WarLogs
 ## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
 ## Notes-enUS: Show you Warcraft Logs ranking in game 
