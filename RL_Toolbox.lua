@@ -1,12 +1,12 @@
-WLToolbox = {}
-WLToolbox.__index = WLToolbox
+RLToolbox = {}
+RLToolbox.__index = RLToolbox
 
 local _, ns = ...
 local db = ns.db
 local convTable = {}
 
 -- Colors used in the addon (principally for the rank percentages)
-WLToolbox.colors = {
+RLToolbox.colors = {
     ["grey"] = "|cff9d9d9d",
     ["gray"] = "|cff9d9d9d",
     ["green"] = "|cff1eff00",
@@ -22,7 +22,7 @@ WLToolbox.colors = {
 -- Ternary function to reduce the number of lines in the code
 -- Maybe who should use something like a quarternary function to reduce the number of lines even more?
 -- Maybe we should use a ToolBox namespace for this?
-function WLToolbox:Ternary(condition, ifTrue, ifFalse)
+function RLToolbox:Ternary(condition, ifTrue, ifFalse)
     if condition then
         return ifTrue
     else
@@ -31,7 +31,7 @@ function WLToolbox:Ternary(condition, ifTrue, ifFalse)
 end
 -- TODO: Create something that looks like a switch/case statement
 
-function WLToolbox:SplitDatasForPlayer(name, realm)
+function RLToolbox:SplitDatasForPlayer(name, realm)
     if (realm == nil) then
         realm = playerRealm
     end
@@ -68,8 +68,8 @@ function WLToolbox:SplitDatasForPlayer(name, realm)
     return playerTable
 end
 
-function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
-    playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
+function RLToolbox:CalculateAverageForPlayer(name, realm, raid)
+    playerDatas = RLToolbox:SplitDatasForPlayer(name, realm)
     local difficulty = ""
     local raidName = db.RaidName[raid]
     local score = 0
@@ -103,23 +103,23 @@ function WLToolbox:CalculateAverageForPlayer(name, realm, raid)
     return difficulty, raidName, score
 end
 
-function WLToolbox:ScoreToColor(score)
+function RLToolbox:ScoreToColor(score)
     score = tonumber(score)
-    return WLToolbox:Ternary(score < 25, WLToolbox.colors["grey"], WLToolbox:Ternary(score < 50, WLToolbox.colors["green"], WLToolbox:Ternary(score < 75, WLToolbox.colors["blue"], WLToolbox:Ternary(score < 95, WLToolbox.colors["purple"], WLToolbox:Ternary(score < 99, WLToolbox.colors.orange, WLToolbox:Ternary(score < 100, WLToolbox.colors.pink, WLToolbox.colors.herloom))))))
+    return RLToolbox:Ternary(score < 25, RLToolbox.colors["grey"], RLToolbox:Ternary(score < 50, RLToolbox.colors["green"], RLToolbox:Ternary(score < 75, RLToolbox.colors["blue"], RLToolbox:Ternary(score < 95, RLToolbox.colors["purple"], RLToolbox:Ternary(score < 99, RLToolbox.colors.orange, RLToolbox:Ternary(score < 100, RLToolbox.colors.pink, RLToolbox.colors.herloom))))))
 end
 
-function WLToolbox:DifficultyToName(difficulty)
-    return WLToolbox:Ternary(difficulty == 5, "M", WLToolbox:Ternary(difficulty == 4, "H", "N"))
+function RLToolbox:DifficultyToName(difficulty)
+    return RLToolbox:Ternary(difficulty == 5, "M", RLToolbox:Ternary(difficulty == 4, "H", "N"))
 end
 
-function WLToolbox:DifficultyToColor(difficulty)
+function RLToolbox:DifficultyToColor(difficulty)
     if (type(difficulty) == "string") then
-        return WLToolbox:Ternary(difficulty == "M", WLToolbox.colors["purple"], WLToolbox:Ternary(difficulty == "H", WLToolbox.colors["blue"], WLToolbox.colors["green"]))
+        return RLToolbox:Ternary(difficulty == "M", RLToolbox.colors["purple"], RLToolbox:Ternary(difficulty == "H", RLToolbox.colors["blue"], RLToolbox.colors["green"]))
     end
-    return WLToolbox:Ternary(difficulty == 5, WLToolbox.colors["purple"], WLToolbox:Ternary(difficulty == 4, WLToolbox.colors["blue"], WLToolbox.colors["green"]))
+    return RLToolbox:Ternary(difficulty == 5, RLToolbox.colors["purple"], RLToolbox:Ternary(difficulty == 4, RLToolbox.colors["blue"], RLToolbox.colors["green"]))
 end
 
-function WLToolbox:GetMetricFromPlayertable(playertable)
+function RLToolbox:GetMetricFromPlayertable(playertable)
     local dps = 0
     local hps = 0
 
@@ -139,11 +139,11 @@ function WLToolbox:GetMetricFromPlayertable(playertable)
     return "hps"
 end
 
-function WLToolbox:MetricToIcon(metric)
-    return WLToolbox:Ternary(metric == "dps", "|A:4257:19:19|a", WLToolbox:Ternary(metric == "hps", "|A:4258:19:19|a", "|A:4259:19:19|a"))
+function RLToolbox:MetricToIcon(metric)
+    return RLToolbox:Ternary(metric == "dps", "|A:4257:19:19|a", RLToolbox:Ternary(metric == "hps", "|A:4258:19:19|a", "|A:4259:19:19|a"))
 end
 
-function WLToolbox:Contains(table, element)
+function RLToolbox:Contains(table, element)
     for _, value in pairs(table) do
         if value == element then
             return true
@@ -152,7 +152,7 @@ function WLToolbox:Contains(table, element)
     return false
 end
 
-function WLToolbox:GetLastRaidNumber(raids)
+function RLToolbox:GetLastRaidNumber(raids)
     local lastRaid = nil
     for raid, _ in pairs(raids) do
         lastRaid = raid
@@ -160,7 +160,7 @@ function WLToolbox:GetLastRaidNumber(raids)
     return lastRaid
 end
 
-function WLToolbox:GetAllRaidsNumber(extension)
+function RLToolbox:GetAllRaidsNumber(extension)
     local raids = {}
     for raidNumber, _ in pairs(extension) do
         table.insert(raids, raidNumber)
@@ -176,24 +176,24 @@ local function OnAddonLoaded(_, _, addonName)
         do return end
     end
 
-    if (addonName == "WarLogs_DB_EU") or (C_AddOns.IsAddOnLoaded("WarLogs_DB_EU")) then
-        RaidLogsAddCharsToDB(_G["WL_DB_EU"])
+    if (addonName == "RaidLogs_DB_EU") or (C_AddOns.IsAddOnLoaded("RaidLogs_DB_EU")) then
+        RaidLogsAddCharsToDB(_G["RL_DB_EU"])
         convTable = _G["EU_gnippam"]
         addonLoaded = true
-    elseif (addonName == "WarLogs_DB_US") or (C_AddOns.IsAddOnLoaded("WarLogs_DB_US")) then
-        RaidLogsAddCharsToDB(_G["WL_DB_US"])
+    elseif (addonName == "RaidLogs_DB_US") or (C_AddOns.IsAddOnLoaded("RaidLogs_DB_US")) then
+        RaidLogsAddCharsToDB(_G["RL_DB_US"])
         convTable = _G["US_gnippam"]
         addonLoaded = true
-    elseif (addonName == "WarLogs_DB_CN") or (C_AddOns.IsAddOnLoaded("WarLogs_DB_CN")) then
-        RaidLogsAddCharsToDB(_G["WL_DB_CN"])
+    elseif (addonName == "RaidLogs_DB_CN") or (C_AddOns.IsAddOnLoaded("RaidLogs_DB_CN")) then
+        RaidLogsAddCharsToDB(_G["RL_DB_CN"])
         convTable = _G["CN_gnippam"]
             addonLoaded = true
-    elseif (addonName == "WarLogs_DB_KR") or (C_AddOns.IsAddOnLoaded("WarLogs_DB_KR")) then
-        RaidLogsAddCharsToDB(_G["WL_DB_KR"])
+    elseif (addonName == "RaidLogs_DB_KR") or (C_AddOns.IsAddOnLoaded("RaidLogs_DB_KR")) then
+        RaidLogsAddCharsToDB(_G["RL_DB_KR"])
         convTable = _G["KR_gnippam"]
             addonLoaded = true
-    elseif (addonName == "WarLogs_DB_TW") or (C_AddOns.IsAddOnLoaded("WarLogs_DB_TW")) then
-        RaidLogsAddCharsToDB(_G["WL_DB_TW"])
+    elseif (addonName == "RaidLogs_DB_TW") or (C_AddOns.IsAddOnLoaded("RaidLogs_DB_TW")) then
+        RaidLogsAddCharsToDB(_G["RL_DB_TW"])
         convTable = _G["TW_gnippam"]
             addonLoaded = true
     end

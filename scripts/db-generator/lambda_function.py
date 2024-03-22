@@ -112,7 +112,7 @@ def transform_player_data_ugly(player):
 
 def generate_db(db, region):
     global nbPlayers
-    with open(f"{git_repo_path}/db/WL_DB_{region}.lua", "w") as db_file:
+    with open(f"{git_repo_path}/db/RL_DB_{region}.lua", "w") as db_file:
         region_servers = db.players.distinct("server", {"region": region})
         lines = []
         # Add header
@@ -140,7 +140,7 @@ def generate_db(db, region):
 def generate_reverse_mapping():
     global mapping
 
-    with open(f"{git_repo_path}/db/WL_DB_Tools.lua", "w") as db_file:
+    with open(f"{git_repo_path}/db/RL_DB_Tools.lua", "w") as db_file:
         gnippam = {}
         for k, v in enumerate(mapping):
             gnippam[k] = {

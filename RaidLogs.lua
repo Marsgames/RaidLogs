@@ -3,7 +3,7 @@ local addonName, ns = ...
 local db = ns.db
 charData = {}
 
--- Create public function to populate the db (called from db/WarLogs_DB_XX.lua, but as these files are
+-- Create public function to populate the db (called from db/RaidLogs_DB_XX.lua, but as these files are
 --      enabled with "another addon" they do not have the same namespace as this file)
 function RaidLogsAddCharsToDB(charsTable)
     -- append charsTable to db.char
@@ -20,14 +20,14 @@ local playerRealm = GetRealmName()
 -- Given a data set, return a tooltip double line formatted string
 local function ProcessLines(lineLeft, lineRight, maxDifficulty, datas, difficulty, bossName)
     -- Get color for the rank percentage and difficulty "name"
-    local scoreColor = WLToolbox:ScoreToColor(datas["rank"])
-    local diffName = WLToolbox:DifficultyToName(difficulty)
+    local scoreColor = RLToolbox:ScoreToColor(datas["rank"])
+    local diffName = RLToolbox:DifficultyToName(difficulty)
 
     -- If there is a rank for this difficulty, and the difficulty is higher than the previous tested ones, add a line to the tooltip
     if (difficulty > maxDifficulty and datas["rank"] > 0) then
         maxDifficulty = difficulty
-        local diffColor = WLToolbox:Ternary(diffName == "N", WLToolbox.colors["green"], WLToolbox:Ternary(diffName == "H", WLToolbox.colors["blue"], WLToolbox.colors["purple"]))
-        lineLeft = diffColor .. diffName .. " " .. WLToolbox.colors["white"] .. bossName
+        local diffColor = RLToolbox:Ternary(diffName == "N", RLToolbox.colors["green"], RLToolbox:Ternary(diffName == "H", RLToolbox.colors["blue"], RLToolbox.colors["purple"]))
+        lineLeft = diffColor .. diffName .. " " .. RLToolbox.colors["white"] .. bossName
         lineRight = scoreColor .. datas["rank"] .. "%"
     end
     return lineLeft, lineRight, maxDifficulty
@@ -39,34 +39,34 @@ local function ProcessEmptyRaid(raid, frame, addLineBefore)
     if (addLineBefore) then
         frame:AddLine(" ")
     end
-    frame:AddDoubleLine(raidName, WLToolbox.colors.grey .. "No data")
+    frame:AddDoubleLine(raidName, RLToolbox.colors.grey .. "No data")
     for i = 0, #extBosses[raid] do
         local bossName = extBosses[raid][i]
-        frame:AddDoubleLine(WLToolbox.colors.grey .. "-  " .. bossName, "")
+        frame:AddDoubleLine(RLToolbox.colors.grey .. "-  " .. bossName, "")
     end
 end
 
 local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
     local raidName = db.RaidName[raid]
     if (not charData[unitRealm]) or (not charData[unitRealm][unitName]) then
-        local lastRaid = WLToolbox:GetLastRaidNumber(extBosses)
+        local lastRaid = RLToolbox:GetLastRaidNumber(extBosses)
         if (raid == lastRaid) then
             ProcessEmptyRaid(raid, frame, addLineBefore)
         else
-            frame:AddDoubleLine(raidName, WLToolbox.colors.grey .. "No data")
+            frame:AddDoubleLine(raidName, RLToolbox.colors.grey .. "No data")
         end
         return
     end
     -- local playerDatas = charData[unitRealm][unitName]
-    local playerTable = WLToolbox:SplitDatasForPlayer(unitName, unitRealm)
-    local metric = WLToolbox:GetMetricFromPlayertable(playerTable)
+    local playerTable = RLToolbox:SplitDatasForPlayer(unitName, unitRealm)
+    local metric = RLToolbox:GetMetricFromPlayertable(playerTable)
 
     if (addLineBefore) then
         frame:AddLine(" ")
     end
 
     --local TankIcon = "|A:4259:19:19|a" -- Should not appear
-    frame:AddDoubleLine(raidName, WLToolbox:MetricToIcon(metric))
+    frame:AddDoubleLine(raidName, RLToolbox:MetricToIcon(metric))
 
     if (not extBosses[raid]) then
         return
@@ -98,7 +98,7 @@ local function ProcessRaid(raid, frame, unitRealm, unitName, addLineBefore)
             end
         end
         if lineLeft == "" then
-            frame:AddDoubleLine(WLToolbox.colors.grey .. "-  " .. bossName, "")
+            frame:AddDoubleLine(RLToolbox.colors.grey .. "-  " .. bossName, "")
         else
             frame:AddDoubleLine(lineLeft, lineRight)
         end
@@ -129,13 +129,13 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
     end
 
     if (unitName == "Niisha" and unitRealm == "Temple noir") or (unitName == "Tempaxe" and unitRealm == "Temple noir") or (unitName == "Mío" and unitRealm == "Hyjal") then
-        frame:AddLine(WLToolbox.colors.green ..
+        frame:AddLine(RLToolbox.colors.green ..
         unitName ..
-        WLToolbox.colors.white ..
+        RLToolbox.colors.white ..
         " - " ..
-        WLToolbox.colors.blue .. unitRealm .. WLToolbox.colors.white .. " | " .. WLToolbox.colors.purple .. "Author")
+        RLToolbox.colors.blue .. unitRealm .. RLToolbox.colors.white .. " | " .. RLToolbox.colors.purple .. "Author")
     else
-        frame:AddLine(WLToolbox.colors.white .. unitName .. " - " .. unitRealm)
+        frame:AddLine(RLToolbox.colors.white .. unitName .. " - " .. unitRealm)
     end
     frame:AddLine(" ")
 
@@ -156,7 +156,7 @@ local function ProcessPVEFrameTooltip(unitName, unitRealm)
         local englishName = db.GrpID[grpID]
         local raidID = db.RaidID[englishName]
 
-        local raidIDs = WLToolbox:GetAllRaidsNumber(extBosses)
+        local raidIDs = RLToolbox:GetAllRaidsNumber(extBosses)
         if (not IsAltKeyDown()) and not (englishName == nil) then
             ProcessRaid(raidID, frame, unitRealm, unitName, false)
         else
@@ -193,22 +193,22 @@ local function ProcessOveringTooltip(name, realm)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("RaidLogs Average Ranking")
 
-    local raidIDs = WLToolbox:GetAllRaidsNumber(extBosses)
-    local playerDatas = WLToolbox:SplitDatasForPlayer(name, realm)
+    local raidIDs = RLToolbox:GetAllRaidsNumber(extBosses)
+    local playerDatas = RLToolbox:SplitDatasForPlayer(name, realm)
     for i = 1, #raidIDs do
         local raidID = raidIDs[i]
-        local difficulty, raidName, score, metric = WLToolbox:CalculateAverageForPlayer(name, realm, raidID)
-        metric = WLToolbox:GetMetricFromPlayertable(playerDatas)
+        local difficulty, raidName, score, metric = RLToolbox:CalculateAverageForPlayer(name, realm, raidID)
+        metric = RLToolbox:GetMetricFromPlayertable(playerDatas)
 
         if (score > 0) then
-            local difficulty = (WLToolbox:DifficultyToColor(difficulty) .. WLToolbox:DifficultyToName(difficulty))
-            local raidName = (WLToolbox.colors.white .. raidName)
+            local difficulty = (RLToolbox:DifficultyToColor(difficulty) .. RLToolbox:DifficultyToName(difficulty))
+            local raidName = (RLToolbox.colors.white .. raidName)
             score = string.sub(score, 1, 4)
-            local score = (WLToolbox:ScoreToColor(score) .. score .. "%")
-            local metricIcon = WLToolbox:MetricToIcon(metric)
+            local score = (RLToolbox:ScoreToColor(score) .. score .. "%")
+            local metricIcon = RLToolbox:MetricToIcon(metric)
             GameTooltip:AddDoubleLine(difficulty .. " " .. raidName, metricIcon .. " " .. score)
         else
-            GameTooltip:AddDoubleLine(WLToolbox.colors.grey .. "- " .. raidName, WLToolbox.colors.grey .. "No data")
+            GameTooltip:AddDoubleLine(RLToolbox.colors.grey .. "- " .. raidName, RLToolbox.colors.grey .. "No data")
         end
     end
 end

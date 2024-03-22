@@ -14,13 +14,13 @@
 ## X-Category: Boss Encounters
 ## X-eMail: marsgamess@gmail.com
 
-## SavedVariables: WarLogsDB
+## SavedVariables: RaidLogsDB
 
-## OptionalDeps:  WarLogs_DB_EU, WarLogs_DB_US, WarLogs_DB_CN, WarLogs_DB_KR, WarLogs_DB_TW
+## OptionalDeps:  RaidLogs_DB_EU, RaidLogs_DB_US, RaidLogs_DB_CN, RaidLogs_DB_KR, RaidLogs_DB_TW
 
 ########## DB ##########
 db\RL_raids.lua
 
 ########## Addon ##########
-WL_Toolbox.lua
+RL_Toolbox.lua
 RaidLogs.lua
