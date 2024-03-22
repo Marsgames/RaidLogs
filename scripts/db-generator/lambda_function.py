@@ -45,9 +45,9 @@ def clone_git_repo():
 
 
 def update_toc():
-    # Open WarLogs.toc to update a line
+    # Open RaidLogs.toc to update a line
     major, minor, patch = "X", "X", "X"
-    with open(f"{git_repo_path}/WarLogs.toc", "r") as toc_file:
+    with open(f"{git_repo_path}/RaidLogs.toc", "r") as toc_file:
         lines = toc_file.readlines()
         for i, line in enumerate(lines):
             if line.startswith("## Version"):
@@ -55,7 +55,7 @@ def update_toc():
                 major, minor, patch = actual_version.split(".")
                 patch = int(patch) + 1
                 lines[i] = f"## Version: {major}.{minor}.{patch}\n"
-    with open(f"{git_repo_path}/WarLogs.toc", "w") as toc_file:
+    with open(f"{git_repo_path}/RaidLogs.toc", "w") as toc_file:
         toc_file.writelines(lines)
     return f"{major}.{minor}.{patch}"
 
@@ -131,7 +131,7 @@ def generate_db(db, region):
             line = f"F = function() provider{lua_dump} end F()\n"
             lines.append(line)
         # Add footer
-        lines.append("\nWarLogsAddCharsToDB(provider)")
+        lines.append("\nRaidLogsAddCharsToDB(provider)")
         db_file.writelines(lines)
 
     return region
@@ -165,7 +165,7 @@ def commit():
     )
     os.system(f"cd {git_repo_path} && git tag {version} && git push --tags")
     # Creating a release on github requires "gh" cli, but I'm not sure it's installed on lambda so flemme
-    # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "WarLogs {version}")')
+    # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "RaidLogs {version}")')
 
 
 def lambda_handler(event, ctx):

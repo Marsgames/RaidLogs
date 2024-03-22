@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VENV_PATH="/mnt/c/Users/17025/.virtualenvs/report-scrapper-ne70So_o/Lib/site-packages"
-GIT_SCRAPPER_PATH="/mnt/f/Projects/WarLogsRanking/scripts/report-scrapper"
+GIT_SCRAPPER_PATH="/mnt/f/Projects/RaidLogsRanking/scripts/report-scrapper"
 
 rm $VENV_PATH/lambda_function.py
 rm $GIT_SCRAPPER_PATH/lambda_package.zip

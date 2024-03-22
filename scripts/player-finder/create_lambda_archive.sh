@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VENV_PATH="/Users/brigade16/.local/share/virtualenvs/player-finder-r6RROmoW"
-GIT_SCRAPPER_PATH="/Applications/World of Warcraft/_retail_/Interface/AddOns/WarLogs/scripts/player-finder"
+GIT_SCRAPPER_PATH="/Applications/World of Warcraft/_retail_/Interface/AddOns/RaidLogs/scripts/player-finder"
 
 # Original code
 # rm $VENV_PATH/lambda_function.py

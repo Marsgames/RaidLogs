@@ -1,0 +1,26 @@
+## Interface: 100206
+## Title: RaidLogs
+## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
+## Notes-enUS: Shows your logs directly in game
+## Author:  Marsgames & Tempaxe & Mío
+## Version: 1.1.236
+## DefaultState: enabled
+
+
+## X-Author-Faction: Horde
+## X-Author-Server: (EU) Temple-Noir | (EU) Hyjal
+## X-Credits: Big up
+
+## X-Category: Boss Encounters
+## X-eMail: marsgamess@gmail.com
+
+## SavedVariables: WarLogsDB
+
+## OptionalDeps:  WarLogs_DB_EU, WarLogs_DB_US, WarLogs_DB_CN, WarLogs_DB_KR, WarLogs_DB_TW
+
+########## DB ##########
+db\RL_raids.lua
+
+########## Addon ##########
+WL_Toolbox.lua
+RaidLogs.lua

@@ -1,0 +1,14 @@
+## Interface: 100206
+## Title: RaidLogs Database |cff00ff00KOREA
+## Author: Marsgames & Mantis
+## Dependencies: RaidLogs
+## DefaultState: enabled
+## X-Type: Boss Encounters
+## X-Region: Korea
+## X-Faction: Both
+## X-Category: Boss Encounters
+## X-eMail: marsgamess@gmail.com
+
+########## DB ##########
+../RaidLogs/db/RL_DB_KR.lua
+../RaidLogs/db/RL_DB_Tools_KR.lua

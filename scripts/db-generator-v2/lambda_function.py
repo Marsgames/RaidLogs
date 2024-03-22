@@ -98,7 +98,7 @@ def dump_lua(data):
 
 def generate_db(withDB, forRegion):
     global nbPlayers
-    with open(f"{git_repo_path}/db/WL_DB_{forRegion}.lua", "w") as db_file:
+    with open(f"{git_repo_path}/db/RL_DB_{forRegion}.lua", "w") as db_file:
         region_servers = withDB.players.distinct("server", {"region": forRegion})
         print(f"There is {len(region_servers)} servers in {forRegion}")
         lines = []
@@ -118,8 +118,8 @@ def generate_db(withDB, forRegion):
             line = f"F = function() provider{lua_dump} end F()\n"
             lines.append(line)
         # Add footer
-        lines.append(f'\n_G["WL_DB_{forRegion}"] = provider')
-        # lines.append("\nWarLogsAddCharsToDB(provider)")
+        lines.append(f'\n_G["RL_DB_{forRegion}"] = provider')
+        # lines.append("\nRaidLogsAddCharsToDB(provider)")
         db_file.writelines(lines)
 
     return forRegion
@@ -131,7 +131,7 @@ def generate_db(withDB, forRegion):
 def generate_reverse_mapping(region):
     global mapping
 
-    with open(f"{git_repo_path}/db/WL_DB_Tools_{region}.lua", "w") as db_file:
+    with open(f"{git_repo_path}/db/RL_DB_Tools_{region}.lua", "w") as db_file:
         gnippam = {}
         for k, v in enumerate(mapping):
             gnippam[k] = {
@@ -151,9 +151,9 @@ def generate_reverse_mapping(region):
 
 ########## Tools ##########
 def update_toc():
-    # Open WarLogs.toc to update a line
+    # Open RaidLogs.toc to update a line
     major, minor, patch = "X", "X", "X"
-    with open(f"{git_repo_path}/WarLogs.toc", "r") as toc_file:
+    with open(f"{git_repo_path}/RaidLogs.toc", "r") as toc_file:
         lines = toc_file.readlines()
         for i, line in enumerate(lines):
             if line.startswith("## Version"):
@@ -161,7 +161,7 @@ def update_toc():
                 major, minor, patch = actual_version.split(".")
                 patch = int(patch) + 1
                 lines[i] = f"## Version: {major}.{minor}.{patch}\n"
-    with open(f"{git_repo_path}/WarLogs.toc", "w") as toc_file:
+    with open(f"{git_repo_path}/RaidLogs.toc", "w") as toc_file:
         toc_file.writelines(lines)
     return f"{major}.{minor}.{patch}"
 
@@ -223,7 +223,7 @@ def generate_tag():
     os.system(f"cd {git_repo_path} && git tag {version} && git push --tags")
 
     # Creating a release on github requires "gh" cli, but I'm not sure it's installed on lambda so flemme
-    # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "WarLogs {version}")')
+    # os.system(f'cd {git_repo_path} && git release create {version} -F <(echo "RaidLogs {version}")')
 
 
 ########## Git ##########

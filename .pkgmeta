@@ -1,17 +1,17 @@
-package-as: WarLogs
+package-as: RaidLogs
 enable-nolib-creation: no
 
 move-folders:
-    WarLogs/db/WarLogs_DB_CN: WarLogs_DB_CN
-    WarLogs/db/WarLogs_DB_EU: WarLogs_DB_EU
-    WarLogs/db/WarLogs_DB_KR: WarLogs_DB_KR
-    WarLogs/db/WarLogs_DB_TW: WarLogs_DB_TW
-    WarLogs/db/WarLogs_DB_US: WarLogs_DB_US
+  RaidLogs/db/RaidLogs_DB_CN: RaidLogs_DB_CN
+  RaidLogs/db/RaidLogs_DB_EU: RaidLogs_DB_EU
+  RaidLogs/db/RaidLogs_DB_KR: RaidLogs_DB_KR
+  RaidLogs/db/RaidLogs_DB_TW: RaidLogs_DB_TW
+  RaidLogs/db/RaidLogs_DB_US: RaidLogs_DB_US
 
 ignore:
- - README.md
- - scripts
- - .vscode
- - .gitignore
- - .github
- - .git
+  - README.md
+  - scripts
+  - .vscode
+  - .gitignore
+  - .github
+  - .git

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # VENV_PATH="/Users/Raph/.local/share/virtualenvs/db-generator-v2-KQkX3Umt"
-# GIT_SCRAPPER_PATH="/Users/Raph/Documents/HE/WarLogs/scripts/db-generator-v2"
+# GIT_SCRAPPER_PATH="/Users/Raph/Documents/HE/RaidLogs/scripts/db-generator-v2"
 
 # rm $VENV_PATH/lambda_function.py
 # rm $GIT_SCRAPPER_PATH/lambda_package.zip

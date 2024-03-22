@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import boto3
 import requests

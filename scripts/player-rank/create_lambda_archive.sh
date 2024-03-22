@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VENV_PATH="/Users/rd-headcrab/.local/share/virtualenvs/player-rank-kRJBIFSN"
-GIT_SCRAPPER_PATH="/Users/rd-headcrab/Documents/HE/WarLogs/scripts/player-rank"
+GIT_SCRAPPER_PATH="/Users/rd-headcrab/Documents/HE/RaidLogs/scripts/player-rank"
 
 # Original code
 # rm $VENV_PATH/lambda_function.py
