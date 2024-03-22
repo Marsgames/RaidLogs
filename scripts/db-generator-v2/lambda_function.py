@@ -10,7 +10,7 @@ from pymongo import MongoClient
 # If region is EU, generate git tag and push
 
 sqs_db_queue = "https://sqs.us-east-1.amazonaws.com/697133125351/wcl_db_generator"
-lambda_client = boto3.client("lambda")
+# lambda_client = boto3.client("lambda")
 
 git_repo_url = "https://Marsgames:{0}@github.com/Marsgames/WarLogs.git"
 git_repo_path = "/tmp/WarLogs"
@@ -211,7 +211,7 @@ def commit(region):
     global nbPlayers
 
     os.system(
-        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add * && git commit -m 'Auto Generated {region} DB' -m 'DB for region {region} generated\n{nbPlayers} players processed' && git push"
+        f"cd {git_repo_path} && git config user.email 'aws@aws.com' && git config user.name 'AWS Lambda' && git add . && git commit -m 'Auto Generated {region} DB' -m 'DB for region {region} generated\n{nbPlayers} players processed' && git push"
     )
 
 
@@ -325,3 +325,43 @@ def lambda_handler(event, context):
             generate_tag()
 
         remove_tmp_folder()
+
+if __name__ == "__main__":
+    wowRegions = ["TW", "KR", "CN", "US", "EU"]
+    
+    # Connect to mongoDB
+    print("Connecting to MongoDB...")
+    db = get_mongo_db()
+
+    # Clone git repo
+    print("Cloning git repo...")
+    clone_git_repo()
+        
+    # Try get current wowRegion
+    print("Getting current wowRegion and nbPlayers...")
+    for wowRegion in wowRegions:
+        mapping = []
+        nbPlayers = 0
+        
+        # Update repo if needed
+        clone_git_repo()
+
+        # Generate DB for wowRegion
+        print(f"Generating DB for {wowRegion}...")
+        generate_db(db, wowRegion)
+
+        # Generate mapping for wowRegion
+        print(f"Generating mapping for {wowRegion}...")
+        generate_reverse_mapping(wowRegion)
+
+        # push modifications to git
+        print("Committing to git...")
+        commit(wowRegion)
+
+        # if wowRegion is not eu, create a sqs message for next wowRegion and send it to sqs
+        if wowRegion == "EU":
+            # Generate git tag
+            print("Generating git tag...")
+            generate_tag()
+
+    remove_tmp_folder()
