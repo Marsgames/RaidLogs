@@ -3,7 +3,7 @@
 ## Notes: Cet addon affiche pour les logs d'un joueurs directement en jeu
 ## Notes-enUS: Shows your logs directly in game
 ## Author:  Marsgames & Tempaxe & Mío
-## Version: 1.1.299
+## Version: 1.1.300
 ## DefaultState: enabled
 
 
